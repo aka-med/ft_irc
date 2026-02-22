@@ -1,5 +1,7 @@
 #include "../includes/Server.hpp"
 
+bool Server::_signal = false;
+
 Server::Server(int port, std::string password)
 {
     int                 op = 1;
@@ -41,9 +43,9 @@ Server::Server(int port, std::string password)
 
 void Server::run()
 {
-    while(1)
+    while(_signal == false)
     {
-        if(poll(&_fds[0], _fds.size(), -1) < 0)
+        if(poll(&_fds[0], _fds.size(), -1) < 0 && _signal == false)
             throw std::runtime_error("poll failed");
         for(size_t i = 0; i < _fds.size(); i++)
         {
@@ -95,4 +97,10 @@ void Server::acceptclientcommands(int fd)
     //parse the data
     //and then execute the data;
     (void)fd;
+}
+
+void Server::signalhandler(int signum)
+{
+    (void)signum;
+    _signal = true;
 }
