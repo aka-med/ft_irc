@@ -10,10 +10,12 @@
 #include <poll.h>
 #include <arpa/inet.h>
 #include "Client.hpp"
+#include <signal.h>
 
 class Server
 {
     private:
+        static bool                 _signal;                   
         int                         _port;
         int                         _serv_socketfd;
         std::string                 _password;
@@ -25,6 +27,7 @@ class Server
         void run();
         void acceptnewclient();
         void acceptclientcommands(int fd);
+        static void signalhandler(int signum);
 
 
 };

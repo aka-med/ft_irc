@@ -10,6 +10,8 @@ int main(int ac, char **av)
     // yel-bouz parse the input here av[1] port (should be int), av[2] password (should be string) if there is an error exit
     try
     {
+        signal(SIGINT, Server::signalhandler);
+		signal(SIGQUIT, Server::signalhandler);
         Server server(std::atoi(av[1]), av[2]);
         server.run();
         
