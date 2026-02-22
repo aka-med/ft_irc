@@ -11,6 +11,10 @@
 #include <arpa/inet.h>
 #include "Client.hpp"
 #include <signal.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include <map>
+#include <sstream>
 
 class Server
 {
@@ -19,7 +23,7 @@ class Server
         int                         _port;
         int                         _serv_socketfd;
         std::string                 _password;
-        std::vector<Client>         _clients;
+        std::map<int, Client>        _clients;
         std::vector<struct pollfd>  _fds;
 
     public:
@@ -28,6 +32,9 @@ class Server
         void acceptnewclient();
         void acceptclientcommands(int fd);
         static void signalhandler(int signum);
+
+        std::string get_password() const;
+        int get_port() const;
 
 
 };
