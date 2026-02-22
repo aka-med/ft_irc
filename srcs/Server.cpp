@@ -1,4 +1,5 @@
 #include "../includes/Server.hpp"
+#include <arpa/inet.h>
 
 bool Server::_signal = false;
 
@@ -84,23 +85,50 @@ void Server::acceptnewclient()
     client_poll.fd = client_sockfd;
 	client_poll.events = POLLIN;
 	client_poll.revents = 0;
-	_fds.push_back(client_poll);
-
-	client.set_clientsockfd(client_sockfd);
-	_clients.push_back(client);
-
+    client.set_ip(inet_ntoa(client_addr.sin_addr));
+	client.set_fd(client_sockfd);
+    _clients[client_sockfd] = client;
+    _fds.push_back(client_poll);
 }
 
 void Server::acceptclientcommands(int fd)
 {
-    //recieve data in chunks (tcp katsendi data bchenks)
-    //parse the data
-    //and then execute the data;
-    (void)fd;
+    char buffer[1024];
+    int bytes ;
+    size_t pos;
+    std::string& buf = _clients[fd]._buffer;
+
+    bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes <= 0)
+    {
+        // removeClient(fd);
+        return;
+    }
+    buffer[bytes] = '\0';
+    _clients[fd]._buffer += buffer;
+    while ((pos = buf.find("\r\n")) != std::string::npos)
+    {
+        std::string request = buf.substr(0, pos);
+        buf.erase(0, pos + 2);
+        if (!request.empty())
+        {
+            _clients[fd].execute(*this, request);
+        }
+    }
 }
 
 void Server::signalhandler(int signum)
 {
     (void)signum;
     _signal = true;
+}
+
+int Server::get_port() const
+{
+    return _port;
+}
+
+std::string Server::get_password() const
+{
+    return _password;
 }
