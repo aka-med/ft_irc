@@ -10,14 +10,14 @@ bool Command::cap(Server &server, Client &client, const std::vector<std::string>
     std::string subcommand;
 
     if (args.size() < 2) 
-        return true;
+        return Client::KEEP_CLIENT_SOCKET;
 
     subcommand = Utils::to_upper(args[1]);
     if (subcommand == "LS")
     {
         reply = ":" + server.get_name() + " CAP * LS :\r\n"; 
         client.send(reply);
-        return true;
+        return Client::KEEP_CLIENT_SOCKET;
     }
-    return true;
+    return Client::KEEP_CLIENT_SOCKET;
 }

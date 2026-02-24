@@ -59,8 +59,8 @@ void Client::send(const std::string &message) const
 
 bool Client::handle_CMD(Server &server, std::vector<std::string> &cmds)
 {
-    if(cmds.empty())
-        return true;
+    if(cmds.size() < 2)
+        return Client::KEEP_CLIENT_SOCKET;
 
     if (Utils::to_upper(cmds[0]) == "CAP")
         return Command::cap(server, *this, cmds);
@@ -74,28 +74,11 @@ bool Client::handle_CMD(Server &server, std::vector<std::string> &cmds)
         return Command::mode(server, *this, cmds);
     else if(Utils::to_upper(cmds[0]) == "PING")
         return Command::ping(server, *this, cmds);
-    // else if (Utils::to_upper(cmds[0]) == "QUIT")
-    //     // 
-    // else if(user registred )//check if user is registred to perform other dcommands
-    // {
-    //     if (Utils::to_upper(cmds[0]) == "PRIVMSG")
-    //         // privmsgcommand
-    //     else if (Utils::to_upper(cmds[0]) == "JOIN")
-    //         // joincommand
-    //     else if (Utils::to_upper(cmds[0]) == "TOPIC")
-    //         // topiccommand
-    //     else if (Utils::to_upper(cmds[0]) == "MODE")
-    //         // mod command
-    //     else if (Utils::to_upper(cmds[target0]) == "KICK")
-    //         // kickcommand
-    //     else if (Utils::to_upper(cmds[0]) == "INVITE")
-    //         // invitecommand
-    //     else if (cmds[0].size())
-    //         //command not found error message
-    // }
-    // else if (!notregistered(fd))
-    //     //user not registred error message 
-    return true;
+    else if(Utils::to_upper(cmds[0]) == "JOIN")
+        return Command::join(server, *this, cmds);
+    else if(Utils::to_upper(cmds[0]) == "PRIVMSG")
+        return Command::privmsg(server, *this, cmds);
+    return Client::KEEP_CLIENT_SOCKET;
 }
 
 bool Client::execute(Server &server, std::string &req)

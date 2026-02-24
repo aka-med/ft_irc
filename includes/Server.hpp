@@ -14,7 +14,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
-
+#include "Channel.hpp"
 class Server
 {
 private:
@@ -25,9 +25,11 @@ private:
   std::string _server_name;
   std::map<int, Client> _clients;
   std::vector<struct pollfd> _fds;
-  std::map<std::string, std::vector<Client> > _channels;
+  std::map<std::string, std::vector<Channel> > _channels;
 
 public:
+  static const bool FIRST_CHANNEL_JOIN = true;
+  static const bool OTHER_CHANNEL_JOIN = false;
   Server(int port, std::string password, std::string server_name);
   void run();
   void acceptnewclient();
@@ -40,6 +42,11 @@ public:
   bool isNickTaken(const std::string &nick, int exclude_fd) const;
   void removeClient(int fd);
 
-  void addClientToChannel(const std::string &channel_name, const Client &client);
+  void addClientToChannel(const std::string &channel_name, const Client &client, bool first_join = false);
   void removeClientFromChannel(const std::string &channel_name, const Client &client);
+
+  bool channelExists(const std::string &channel_name) const;
+  Channel *getChannel(const std::string &channel_name);
+  Client *getClientByNick(const std::string &nick) const;
+  void sendMessageToUser(const std::string &nick, const std::string &message);
 };

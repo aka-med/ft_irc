@@ -86,35 +86,35 @@ void Server::acceptnewclient()
   _fds.push_back(client_poll);
 }
 
-void Server::acceptclientcommands(int fd)
-{
-  char buffer[1024];
-  int bytes;
-  size_t pos;
-  std::string &buf = _clients[fd]._buffer;
+  void Server::acceptclientcommands(int fd)
+  {
+    char buffer[1024];
+    int bytes;
+    size_t pos;
+    std::string &buf = _clients[fd]._buffer;
 
-  bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
-  if (bytes <= 0)
-  {
-    removeClient(fd);
-    return;
-  }
-  buffer[bytes] = '\0';
-  _clients[fd]._buffer += buffer;
-  while ((pos = buf.find("\r\n")) != std::string::npos)
-  {
-    std::string request = buf.substr(0, pos);
-    buf.erase(0, pos + 2);
-    if (!request.empty())
+    bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+    if (bytes <= 0)
     {
-      if (!_clients[fd].execute(*this, request))
+      removeClient(fd);
+      return;
+    }
+    buffer[bytes] = '\0';
+    _clients[fd]._buffer += buffer;
+    while ((pos = buf.find("\r\n")) != std::string::npos)
+    {
+      std::string request = buf.substr(0, pos);
+      buf.erase(0, pos + 2);
+      if (!request.empty())
       {
-        removeClient(fd);
-        return;
+        if (!_clients[fd].execute(*this, request))
+        {
+          removeClient(fd);
+          return;
+        }
       }
     }
   }
-}
 
 void Server::signalhandler(int signum)
 {
@@ -145,6 +145,11 @@ bool Server::isNickTaken(const std::string &nick, int exclude_fd) const
   return false;
 }
 
+bool Server::channelExists(const std::string &channel_name) const
+{
+    return _channels.find(channel_name) != _channels.end();
+}
+
 void Server::removeClient(int fd)
 {
   close(fd);
@@ -159,31 +164,72 @@ void Server::removeClient(int fd)
   }
 }
 
-void Server::addClientToChannel(const std::string &channel_name, const Client &client)
+void Server::addClientToChannel(const std::string &channel_name, const Client &client, bool first_join)
 {
-  if (_channels[channel_name].empty())
-  {
-    
-    _channels[channel_name].push_back(client);
-    return;
-  }
-  for (size_t i = 0; i < _channels[channel_name].size(); i++)
-  {
-    if (_channels[channel_name][i].get_fd() == client.get_fd())
-      return;
-  }
-  _channels[channel_name].push_back(client);
+    if (first_join)
+    {
+        Channel new_channel(channel_name);
+        new_channel.add_user(client);
+        new_channel.add_operator(client);
+        _channels[channel_name].push_back(new_channel);
+        return;
+    }
+    std::vector<Channel> &channels = _channels[channel_name];
+    for(size_t i = 0; i < channels.size(); i++)
+    {
+        if(channels[i].get_name() == channel_name)
+        {
+            channels[i].add_user(client);
+            break; 
+        }
+    }
 }
 
 void Server::removeClientFromChannel(const std::string &channel_name, const Client &client)
 {
-  std::vector<Client> &clients = _channels[channel_name];
-  for(size_t i = 0; i < clients.size(); i++)
+  std::vector<Channel> &channels = _channels[channel_name];
+  for(size_t i = 0; i < channels.size(); i++)
   {
-    if(clients[i].get_fd() == client.get_fd())
+    if(channels[i].get_name() == channel_name)
     {
-      clients.erase(clients.begin() + i);
+      channels[i].remove_user(client);
       break;
     }
   }
+}
+
+Channel *Server::getChannel(const std::string &channel_name)
+{
+    std::vector<Channel> &channels = _channels[channel_name];
+    for(size_t i = 0; i < channels.size(); i++)
+    {
+        if(channels[i].get_name() == channel_name)
+        {
+            return &channels[i];
+        }
+    }
+    return NULL;
+}
+
+Client *Server::getClientByNick(const std::string &nick) const
+{
+    std::map<int, Client>::const_iterator it;
+
+    for (it = _clients.begin(); it != _clients.end(); ++it)
+        if (it->second.get_nick() == nick)
+            return const_cast<Client *>(&(it->second));
+    
+    return NULL;
+}
+
+void Server::sendMessageToUser(const std::string &nick, const std::string &message)
+{
+    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second.get_nick() == nick)
+        {
+            it->second.send(message);
+            break;
+        }
+    }
 }

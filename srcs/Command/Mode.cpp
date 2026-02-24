@@ -4,7 +4,7 @@
 #include "../includes/Reply.hpp"
 #include "../includes/Utils.hpp"
 
-bool Command::join(Server &server, Client &client, const std::vector<std::string> &args)
+bool Command::mode(Server &server, Client &client, const std::vector<std::string> &args)
 {
     std::string reply;
     std::string target;
@@ -14,17 +14,25 @@ bool Command::join(Server &server, Client &client, const std::vector<std::string
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, target, "", "You have not registered");
         client.send(reply);
-        return Client::REMOVE_CLIENT_SOCKET;
+        return Client::KEEP_CLIENT_SOCKET;
     }
     if (args.size() < 2)
     {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "JOIN", "Not enough parameters");
+        reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "MODE", "Not enough parameters");
         client.send(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
-    // here you should handel the join command and add the client to the channel
-    // if the channel does not exist create it and add the client to it
-    // if the channel exist add the client to it
-    // you should also check if the channel is full or not and if the key is correct or not
+    if (args[1][0] == '#')
+    {
+        // Mohammed Akarkaou :
+        // here you should handel the MODE for channels 
+        return Client::KEEP_CLIENT_SOCKET;
+    }
+    else
+    {
+        // just for skip the fist check from irssi
+        reply = ":" + client.get_nick() + " MODE " + client.get_nick() + " :" + args[2] + "\r\n";
+        client.send(reply);
+    }
     return Client::KEEP_CLIENT_SOCKET;
 }
