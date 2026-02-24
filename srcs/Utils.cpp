@@ -29,3 +29,15 @@ bool Utils::validate_nick(const std::string &nick)
     }
     return true;
 }
+
+std::string Utils::join(const std::vector<std::string> &vec, size_t start, const std::string &delimiter)
+{
+    std::string result;
+    for (size_t i = start; i < vec.size(); ++i)
+    {
+        result += vec[i];
+        if (i != vec.size() - 1)
+            result += delimiter;
+    }
+    return result;
+}   

@@ -15,8 +15,8 @@ namespace Command
     bool mode(Server &server, Client &client, const std::vector<std::string> &args);
     bool ping(Server &server, Client &client, const std::vector<std::string> &args);
     bool join(Server &server, Client &client, const std::vector<std::string> &args);
+    bool privmsg(Server &server, Client &client, const std::vector<std::string> &args);
     // void part(const std::string &channel_name);
-    // void privmsg(const std::string &target, const std::string &message);
     // void quit();
 };
 #endif 

@@ -4,7 +4,7 @@
 #include "../includes/Reply.hpp"
 #include "../includes/Utils.hpp"
 
-bool Command::mode(Server &server, Client &client, const std::vector<std::string> &args)
+bool Command::ping(Server &server, Client &client, const std::vector<std::string> &args)
 {
     std::string reply;
     std::string target;
@@ -14,25 +14,16 @@ bool Command::mode(Server &server, Client &client, const std::vector<std::string
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, target, "", "You have not registered");
         client.send(reply);
-        return Client::REMOVE_CLIENT_SOCKET;
+        return Client::KEEP_CLIENT_SOCKET;
     }
     if (args.size() < 2)
     {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "MODE", "Not enough parameters");
+        reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "PING", "Not enough parameters");
         client.send(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
-    if (args[1][0] == '#')
-    {
-        // Mohammed Akarkaou :
-        // here you should handel the MODE for channels 
-        return Client::KEEP_CLIENT_SOCKET;
-    }
-    else
-    {
-        // just for skip the fist check from irssi
-        reply = ":" + client.get_nick() + " MODE " + client.get_nick() + " :" + args[2] + "\r\n";
-        client.send(reply);
-    }
+    reply = Reply::format_reply(server.get_name(), "PONG", target, "", args[1]);
+    client.send(reply);
+    std::cout << "Server sent PONG to " << client.get_nick() << std::endl;
     return Client::KEEP_CLIENT_SOCKET;
 }

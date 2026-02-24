@@ -10,23 +10,23 @@ bool Command::user(Server &server, Client &client, const std::vector<std::string
     std::string target;
 
     target = client.get_nick().empty() ? "*" : client.get_nick();
-    if (!client.is_authenticated())
+    if(!client.is_authenticated())
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, target, "", "You have not registered");
         client.send(reply);
-        return false;
+        return Client::KEEP_CLIENT_SOCKET;
     }
     if (client.full_conected())
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_ALREADYREGISTRED, target, "", "You are already registered");
         client.send(reply);
-        return false;
+        return Client::KEEP_CLIENT_SOCKET;
     }
     if (args.size() < 5 || args[1].empty() || args[2].empty() || args[3].empty() || args[4].empty())
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "USER", "Not enough parameters");
         client.send(reply);
-        return false;
+        return Client::KEEP_CLIENT_SOCKET;
     }
     client.set_realname(args[4]);
     client.set_user(args[1]);
@@ -52,5 +52,5 @@ bool Command::user(Server &server, Client &client, const std::vector<std::string
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOMOTD, target, "", "MOTD File is missing");
         client.send(reply);
     }
-    return true;
+    return Client::KEEP_CLIENT_SOCKET;
 }
