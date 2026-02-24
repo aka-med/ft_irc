@@ -14,7 +14,7 @@ int main(int ac, char **av)
         signal(SIGPIPE, SIG_IGN);
 		signal(SIGQUIT, Server::signalhandler);
         signal(SIGINT, Server::signalhandler);
-        Server server(std::atoi(av[1]), av[2]);
+        Server server(std::atoi(av[1]), av[2], "ft_irc_server");
         server.run();
         
     }

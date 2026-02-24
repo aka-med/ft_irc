@@ -8,13 +8,8 @@
 
 namespace Utils
 {
-    // static std::string inputMsg(Client &client)
-    // {
-    //     std::string msg = "[IP: " + client.get_ip() + "] [USER uniq number : " + std::to_string(client.get_fd()) + "] " + client.get_nick() + ": ";
-        
-    //     return msg;
-    // }
-    // static std::string entryMsg();
+    std::string to_upper(const std::string &str);
+    bool validate_nick(const std::string &nick);
 };
 
 #endif

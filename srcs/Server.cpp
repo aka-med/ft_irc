@@ -3,7 +3,8 @@
 
 bool Server::_signal = false;
 
-Server::Server(int port, std::string password) {
+Server::Server(int port, std::string password, std::string server_name) : _server_name(server_name)
+{
   int op = 1;
   struct pollfd server_poll;
   struct sockaddr_in serv_addr;
@@ -93,19 +94,24 @@ void Server::acceptclientcommands(int fd)
   std::string &buf = _clients[fd]._buffer;
 
   bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
-  if (bytes <= 0) {
+  if (bytes <= 0)
+  {
     removeClient(fd);
     return;
   }
   buffer[bytes] = '\0';
   _clients[fd]._buffer += buffer;
-    while ((pos = buf.find("\r\n")) != std::string::npos)
-    {
+  while ((pos = buf.find("\r\n")) != std::string::npos)
+  {
     std::string request = buf.substr(0, pos);
     buf.erase(0, pos + 2);
-        if (!request.empty())
-        {
-      _clients[fd].execute(*this, request);
+    if (!request.empty())
+    {
+      if (!_clients[fd].execute(*this, request))
+      {
+        removeClient(fd);
+        return;
+      }
     }
   }
 }
@@ -121,23 +127,62 @@ int Server::get_port() const
     return _port;
 }
 
+std::string Server::get_name() const
+{
+    return _server_name;
+}
+
 std::string Server::get_password() const { return _password; }
 
-bool Server::isNickTaken(const std::string &nick, int exclude_fd) const {
+bool Server::isNickTaken(const std::string &nick, int exclude_fd) const
+{
   std::map<int, Client>::const_iterator it;
-  for (it = _clients.begin(); it != _clients.end(); ++it) {
+
+  for (it = _clients.begin(); it != _clients.end(); ++it)
     if (it->first != exclude_fd && it->second.get_nick() == nick)
       return true;
-  }
+  
   return false;
 }
 
-void Server::removeClient(int fd) {
+void Server::removeClient(int fd)
+{
   close(fd);
   _clients.erase(fd);
-  for (size_t i = 0; i < _fds.size(); i++) {
-    if (_fds[i].fd == fd) {
+  for (size_t i = 0; i < _fds.size(); i++)
+  {
+    if (_fds[i].fd == fd)
+    {
       _fds.erase(_fds.begin() + i);
+      break;
+    }
+  }
+}
+
+void Server::addClientToChannel(const std::string &channel_name, const Client &client)
+{
+  if (_channels[channel_name].empty())
+  {
+    
+    _channels[channel_name].push_back(client);
+    return;
+  }
+  for (size_t i = 0; i < _channels[channel_name].size(); i++)
+  {
+    if (_channels[channel_name][i].get_fd() == client.get_fd())
+      return;
+  }
+  _channels[channel_name].push_back(client);
+}
+
+void Server::removeClientFromChannel(const std::string &channel_name, const Client &client)
+{
+  std::vector<Client> &clients = _channels[channel_name];
+  for(size_t i = 0; i < clients.size(); i++)
+  {
+    if(clients[i].get_fd() == client.get_fd())
+    {
+      clients.erase(clients.begin() + i);
       break;
     }
   }
