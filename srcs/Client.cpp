@@ -2,6 +2,7 @@
 #include "../includes/Server.hpp"
 #include "../includes/Utils.hpp"
 #include "../includes/Commands.hpp"
+#include "../includes/Reply.hpp"
 
 Client::Client()
     : _fd(-1), _ip(""), _nick(""), _user(""), _realname(""), _full_connected(false), _authenticated(false),
@@ -78,7 +79,13 @@ bool Client::handle_CMD(Server &server, std::vector<std::string> &cmds)
         return Command::join(server, *this, cmds);
     else if(Utils::to_upper(cmds[0]) == "PRIVMSG")
         return Command::privmsg(server, *this, cmds);
-    return Client::KEEP_CLIENT_SOCKET;
+    else if (Utils::to_upper(cmds[0]) == "PART")
+        return Command::part(server, *this, cmds);
+    else if (Utils::to_upper(cmds[0]) == "QUIT")
+        return Command::quit(server, *this, cmds);
+    else if (Utils::to_upper(cmds[0]) == "KICK")
+        return Command::kick(server, *this, cmds);
+    return Command::unknown(server, *this, cmds);
 }
 
 bool Client::execute(Server &server, std::string &req)
@@ -87,4 +94,31 @@ bool Client::execute(Server &server, std::string &req)
             << " executed command: " << req << std::endl;
   std::vector<std::string> split_request = split(req);
   return handle_CMD(server, split_request);
+}
+
+void Client::add_channel_to_client(const std::string &channel_name)
+{
+    _channels.push_back(channel_name);
+}
+
+void Client::remove_channel_from_client(const std::string &channel_name)
+{
+    for (size_t i = 0; i < _channels.size(); i++)
+    {
+        if (_channels[i] == channel_name)
+        {
+            _channels.erase(_channels.begin() + i);
+            break;
+        }
+    }
+}
+
+size_t Client::get_channels_count() const
+{
+    return _channels.size();
+}
+
+const std::vector<std::string> &Client::get_channels_list() const
+{
+    return _channels;
 }

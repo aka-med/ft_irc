@@ -1,7 +1,7 @@
-#include "../includes/Commands.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
-#include "../includes/Reply.hpp"
+#include "../../includes/Commands.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Reply.hpp"
 
 
 bool Command::pass(Server &server, Client &client, const std::string &password)
