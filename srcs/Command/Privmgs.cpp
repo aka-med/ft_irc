@@ -25,7 +25,7 @@ bool Command::privmsg(Server &server, Client &client, const std::vector<std::str
     }
     std::string recipient = args[1];
     std::string message = Utils::join(args, 2, " ");
-    if (recipient[0] == '#')
+    if (!recipient.empty() && recipient[0] == '#')
     {
         if (!server.channelExists(recipient))
         {
