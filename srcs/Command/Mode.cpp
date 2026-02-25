@@ -1,9 +1,8 @@
-#include "../includes/Client.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Commands.hpp"
-#include "../includes/Reply.hpp"
-#include "../includes/Utils.hpp"
-
+#include "../../includes/Client.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Commands.hpp"
+#include "../../includes/Reply.hpp"
+#include "../../includes/Utils.hpp"
 bool Command::mode(Server &server, Client &client, const std::vector<std::string> &args)
 {
     std::string reply;

@@ -16,7 +16,9 @@ namespace Command
     bool ping(Server &server, Client &client, const std::vector<std::string> &args);
     bool join(Server &server, Client &client, const std::vector<std::string> &args);
     bool privmsg(Server &server, Client &client, const std::vector<std::string> &args);
-    // void part(const std::string &channel_name);
-    // void quit();
+    bool part(Server &server, Client &client, const std::vector<std::string> &args);
+    bool quit(Server &server, Client &client, const std::vector<std::string> &args);
+    bool kick(Server &server, Client &client, const std::vector<std::string> &args);
+    bool unknown(Server &server, Client &client, const std::vector<std::string> &args);
 };
 #endif 

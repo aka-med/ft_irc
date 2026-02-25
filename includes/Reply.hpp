@@ -22,15 +22,17 @@ namespace Reply
     const std::string RPL_TOPIC = "332"; // For channel topic
     const std::string RPL_NAMREPLY = "353"; // For names in channel
     const std::string RPL_ENDOFNAMES = "366"; // For end of names list
-
     // 400 - 499 : Standard Client and Command Errors
     const std::string ERR_NOSUCHNICK = "401"; // For non-existing nicknames
     const std::string ERR_NOSUCHCHANNEL = "403"; // For non-existing channels
     const std::string ERR_CANNOTSENDTOCHAN = "404"; // Cannot send to channel
+    const std::string ERR_UNKNOWNCOMMAND = "421"; // For unknown commands
     const std::string ERR_NOMOTD = "422"; // For missing MOTD file
     const std::string ERR_NONICKNAMEGIVEN = "431"; // For missing nickname
     const std::string ERR_ERRONEUSNICKNAME = "432"; // For erroneous nickname
     const std::string ERR_NICKNAMEINUSE = "433"; // For nickname already in use
+    const std::string ERR_USERNOTINCHANNEL = "441"; // For users not in a channel
+    const std::string ERR_NOTONCHANNEL = "442"; // For user not on channel
     const std::string ERR_USERONCHANNEL = "443"; // For user already on channel
     const std::string ERR_NOTREGISTERED = "451"; // For commands that require registration
     const std::string ERR_NEEDMOREPARAMS = "461"; // For missing parameters in commands
@@ -39,6 +41,7 @@ namespace Reply
     const std::string ERR_CHANNELISFULL = "471"; // channel is full
     const std::string ERR_BADCHANNELKEY = "475";  // channel key is incorrect
     const std::string ERR_INVITEONLYCHAN = "473"; // channel is invite only
+    const std::string ERR_CHANOPRIVSNEEDED = "482"; // For channel operator privileges needed
     // 500 - 599 : Server-Side Errors and Mode Errors
     const std::string ERR_USERSDONTMATCH = "502"; // For mode changes on other users
 

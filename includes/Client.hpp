@@ -12,6 +12,7 @@ class Client
         std::string _nick;
         std::string _user;
         std::string _realname;
+        std::vector<std::string> _channels;
         bool       _full_connected;
         bool       _authenticated;
 
@@ -41,6 +42,9 @@ class Client
         std::vector<std::string> split(const std::string &str);
         bool execute(Server &server, std::string &request);
         bool handle_CMD(Server &server, std::vector<std::string> &req);
-
+        void add_channel_to_client(const std::string &channel_name);
+        void remove_channel_from_client(const std::string &channel_name);
         void send(const std::string &message) const;
+        size_t get_channels_count() const;
+        const std::vector<std::string> &get_channels_list() const;
 };

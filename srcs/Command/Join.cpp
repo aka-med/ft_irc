@@ -1,10 +1,9 @@
-#include "../includes/Client.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Commands.hpp"
-#include "../includes/Channel.hpp"
-#include "../includes/Reply.hpp"
-#include "../includes/Utils.hpp"
-
+#include "../../includes/Client.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Commands.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Reply.hpp"
+#include "../../includes/Utils.hpp"
 bool Command::join(Server &server, Client &client, const std::vector<std::string> &args)
 {
     std::string reply;
@@ -27,7 +26,6 @@ bool Command::join(Server &server, Client &client, const std::vector<std::string
         client.send(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
-    // join format : JOIN #channel_name
     channel_name = args[1];
     if (channel_name[0] != '#')
     {
@@ -35,10 +33,10 @@ bool Command::join(Server &server, Client &client, const std::vector<std::string
         client.send(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
-
     if (!server.channelExists(channel_name))
     {
         server.addClientToChannel(channel_name, client, Server::FIRST_CHANNEL_JOIN);
+        client.add_channel_to_client(channel_name);
         channel = server.getChannel(channel_name);
         
         reply = Reply::format_command(client, "JOIN", channel_name, "");
@@ -85,7 +83,7 @@ bool Command::join(Server &server, Client &client, const std::vector<std::string
             return Client::KEEP_CLIENT_SOCKET;
         }
         server.addClientToChannel(channel_name, client, Server::OTHER_CHANNEL_JOIN);
-        
+        client.add_channel_to_client(channel_name);
         reply = Reply::format_command(client, "JOIN", channel_name, "");
         channel->broadcast(reply, client);
         client.send(reply);

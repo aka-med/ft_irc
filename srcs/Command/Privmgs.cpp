@@ -1,9 +1,9 @@
-#include "../includes/Client.hpp"
-#include "../includes/Server.hpp"
-#include "../includes/Commands.hpp"
-#include "../includes/Channel.hpp"
-#include "../includes/Reply.hpp"
-#include "../includes/Utils.hpp"
+#include "../../includes/Client.hpp"
+#include "../../includes/Server.hpp"
+#include "../../includes/Commands.hpp"
+#include "../../includes/Channel.hpp"
+#include "../../includes/Reply.hpp"
+#include "../../includes/Utils.hpp"
 
 bool Command::privmsg(Server &server, Client &client, const std::vector<std::string> &args)
 {
