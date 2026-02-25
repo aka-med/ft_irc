@@ -3,6 +3,7 @@
 #include "../includes/Utils.hpp"
 #include "../includes/Commands.hpp"
 #include "../includes/Reply.hpp"
+#include "../includes/Parser.hpp"
 
 Client::Client()
     : _fd(-1), _ip(""), _nick(""), _user(""), _realname(""), _full_connected(false), _authenticated(false),
@@ -36,23 +37,7 @@ bool Client::is_authenticated() const { return (_authenticated); }
 
 bool Client::full_conected() const { return (_full_connected); }
 
-std::vector<std::string> Client::split(const std::string &req)
-{
-  std::vector<std::string> tokens;
-  size_t colon_pos = req.find(':');
-  std::string pre_colon = req.substr(0, colon_pos);
-
-  std::istringstream iss(pre_colon);
-  std::string s;
-
-  while (iss >> s)
-    tokens.push_back(s);
-
-  if (colon_pos != std::string::npos)
-    tokens.push_back(req.substr(colon_pos + 1));
-  return tokens;
-}
-
+#include "../includes/Parser.hpp"
 void Client::send(const std::string &message) const
 {
     ::send(_fd, message.c_str(), message.size(), 0);
@@ -60,7 +45,7 @@ void Client::send(const std::string &message) const
 
 bool Client::handle_CMD(Server &server, std::vector<std::string> &cmds)
 {
-    if(cmds.size() < 2)
+    if(cmds.size() < 1)
         return Client::KEEP_CLIENT_SOCKET;
 
     if (Utils::to_upper(cmds[0]) == "CAP")
@@ -92,7 +77,16 @@ bool Client::execute(Server &server, std::string &req)
 {
   std::cout << "Client " << _nick << " number " << _fd
             << " executed command: " << req << std::endl;
-  std::vector<std::string> split_request = split(req);
+  
+  IRCMessage msg = Parser::parseLine(req);
+  if (msg.empty())
+    return KEEP_CLIENT_SOCKET;
+
+  std::vector<std::string> split_request;
+  split_request.push_back(msg.command);
+  for (size_t i = 0; i < msg.params.size(); ++i)
+    split_request.push_back(msg.params[i]);
+
   return handle_CMD(server, split_request);
 }
 

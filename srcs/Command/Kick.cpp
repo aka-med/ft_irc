@@ -26,7 +26,7 @@ bool Command::kick(Server &server, Client &client, const std::vector<std::string
     std::string channel_name = args[1];
     std::string user_to_kick = args[2];
     std::string reason = args.size() > 3 ? Utils::join(args, 3, " ") : "No reason specified";
-    if (channel_name[0] != '#')
+    if (channel_name.empty() || channel_name[0] != '#')
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
         client.send(reply);

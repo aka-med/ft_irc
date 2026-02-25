@@ -21,7 +21,7 @@ bool Command::mode(Server &server, Client &client, const std::vector<std::string
         client.send(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
-    if (args[1][0] == '#')
+    if (!args[1].empty() && args[1][0] == '#')
     {
         // Mohammed Akarkaou :
         // here you should handel the MODE for channels 

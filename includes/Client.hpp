@@ -39,7 +39,6 @@ class Client
         bool is_authenticated() const;
         bool full_conected() const;
 
-        std::vector<std::string> split(const std::string &str);
         bool execute(Server &server, std::string &request);
         bool handle_CMD(Server &server, std::vector<std::string> &req);
         void add_channel_to_client(const std::string &channel_name);

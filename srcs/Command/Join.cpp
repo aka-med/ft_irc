@@ -27,7 +27,7 @@ bool Command::join(Server &server, Client &client, const std::vector<std::string
         return Client::KEEP_CLIENT_SOCKET;
     }
     channel_name = args[1];
-    if (channel_name[0] != '#')
+    if (channel_name.empty() || channel_name[0] != '#')
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
         client.send(reply);
