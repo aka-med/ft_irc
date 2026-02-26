@@ -49,7 +49,7 @@ namespace Reply
     const std::string ERR_UNKNOWNMODE   = "472";   // Unknown mode character
 
     const std::string ERR_INVALIDMODEPARM = "696";
-
+    const std::string RPL_INVITING = "341";
     // :<prefix> <numeric> <target> [parameters] :<trailing text>\r\n
     std::string format_reply(const std::string &prefix, const std::string &numeric, const std::string &target, const std::string &parameters, const std::string &trailing);
     std::string format_command(const Client &sender, const std::string &command, const std::string &params, const std::string &trailing);
