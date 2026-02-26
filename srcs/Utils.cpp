@@ -41,3 +41,11 @@ std::string Utils::join(const std::vector<std::string> &vec, size_t start, const
     }
     return result;
 }   
+
+
+std::string Utils::int_to_string(int value)
+{
+    std::ostringstream oss;
+    oss << value;
+    return oss.str();
+}

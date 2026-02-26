@@ -45,6 +45,10 @@ namespace Reply
     // 500 - 599 : Server-Side Errors and Mode Errors
     const std::string ERR_USERSDONTMATCH = "502"; // For mode changes on other users
 
+    const std::string RPL_CHANNELMODEIS = "324";   // Mode query reply
+    const std::string ERR_UNKNOWNMODE   = "472";   // Unknown mode character
+
+    const std::string ERR_INVALIDMODEPARM = "696";
 
     // :<prefix> <numeric> <target> [parameters] :<trailing text>\r\n
     std::string format_reply(const std::string &prefix, const std::string &numeric, const std::string &target, const std::string &parameters, const std::string &trailing);
