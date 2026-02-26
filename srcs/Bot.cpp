@@ -74,6 +74,60 @@ std::string Bot::processCommand(const std::string& sender, const std::string& me
 	return ("");
 }
 
+std::string Bot::processChannelMessage(const std::string& sender, const std::string& channel, const std::string& message)
+{
+	if (!_running || message.empty())
+		return ("");
+
+	if (message.find("!calc ") == 0)
+	{
+		std::string expr = message.substr(6);
+		long result = 0;
+		long currentNum = 0;
+		char lastOp = '+';
+		size_t i = 0;
+
+		while (i < expr.length())
+		{
+			if (expr[i] == ' ')
+			{
+				i++;
+				continue;
+			}
+
+			if (expr[i] >= '0' && expr[i] <= '9')
+			{
+				currentNum = 0;
+				while (i < expr.length() && (expr[i] >= '0' && expr[i] <= '9'))
+				{
+					currentNum = currentNum * 10 + (expr[i] - '0');
+					i++;
+				}
+				
+				if (lastOp == '+')
+					result += currentNum;
+				else if (lastOp == '-')
+					result -= currentNum;
+			}
+			else if (expr[i] == '+' || expr[i] == '-')
+			{
+				lastOp = expr[i];
+				i++;
+			}
+			else
+			{
+				return ":" + _nick + " PRIVMSG " + channel + " :" + sender + ", I only understand digits, +, and -.\r\n";
+			}
+		}
+
+		std::stringstream ss;
+		ss << ":" << _nick << " PRIVMSG " << channel << " :" << sender << ", the answer to " << expr << " is " << result << "\r\n";
+		return ss.str();
+	}
+	
+	return ("");
+}
+
 // automatic events
 
 std::string Bot::onJoin(const std::string& nick, const std::string& channel)

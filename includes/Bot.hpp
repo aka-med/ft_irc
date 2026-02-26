@@ -32,6 +32,7 @@ public:
 	Bot& operator=(const Bot& other);
 	~Bot();
 
+	std::string		processChannelMessage(const std::string& sender, const std::string& channel, const std::string& message);
 	std::string		processCommand(const std::string& sender, const std::string& message);
 	std::string		onJoin(const std::string& nick, const std::string& channel);
 	std::string		onPart(const std::string& nick, const std::string& channel);

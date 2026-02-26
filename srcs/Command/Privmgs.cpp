@@ -41,6 +41,16 @@ bool Command::privmsg(Server &server, Client &client, const std::vector<std::str
             return Client::KEEP_CLIENT_SOCKET;
         }
         channel->broadcast(Reply::format_command(client, "PRIVMSG", recipient, message), client);
+
+        std::string botReply = server.getBot().processChannelMessage(client.get_nick(), recipient, message);
+        if (!botReply.empty())
+        {
+            Client botClient;
+            botClient.set_nick(server.getBot().getNick());
+            botClient.set_fd(-1); // Ensure it doesn't match a real user's FD (usually > 0)
+            
+            channel->broadcast(botReply, botClient);
+        }
     }
     else
     {
