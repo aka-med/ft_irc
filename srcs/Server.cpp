@@ -42,15 +42,18 @@ Server::Server(int port, std::string password, std::string server_name) : _serve
 }
 
 void Server::run() {
-  while (_signal == false) {
-    if (poll(&_fds[0], _fds.size(), -1) < 0 && _signal == false)
+  while (_signal == false)
+  {
+    if (poll(&_fds[0], _fds.size(), -1) == -1 && _signal == false)
       throw std::runtime_error("poll failed");
-    for (size_t i = 0; i < _fds.size(); i++) {
-      if (_fds[i].revents & POLLIN) {
+    for (size_t i = 0; i < _fds.size(); i++)
+    {
+      if (_fds[i].revents & POLLIN)
+      {
         if (_fds[i].fd == _serv_socketfd)
           acceptnewclient(); // call the accept client function
         else
-                    acceptclientcommands(_fds[i].fd);//call recieve command function
+          acceptclientcommands(_fds[i].fd);//call recieve command function
       }
     }
   }
@@ -58,21 +61,21 @@ void Server::run() {
 
 void Server::acceptnewclient()
 {
-    Client              client;
-    struct sockaddr_in  client_addr;
+  Client              client;
+  struct sockaddr_in  client_addr;
 	struct pollfd       client_poll;
-    int                 client_sockfd;
+  int                 client_sockfd;
 	socklen_t           len = sizeof(client_addr);
 
 
   client_sockfd = accept(_serv_socketfd, (sockaddr *)&client_addr, &len);
-    if(client_sockfd < 0)
-    {
+  if(client_sockfd < 0)
+  {
     std::cout << "client accept failed" << std::endl;
     return;
   }
-    if(fcntl(client_sockfd, F_SETFL, O_NONBLOCK) < 0)
-    {
+  if(fcntl(client_sockfd, F_SETFL, O_NONBLOCK) < 0)
+  {
     std::cout << "client fcntl failed" << std::endl;
     return;
   }
@@ -101,7 +104,7 @@ void Server::acceptnewclient()
     }
     buffer[bytes] = '\0';
     _clients[fd]._buffer += buffer;
-    while ((pos = buf.find("\r\n")) != std::string::npos)
+    while ((pos = buf.find_first_of("\r\n")) != std::string::npos)
     {
       std::string request = buf.substr(0, pos);
       buf.erase(0, pos + 2);
