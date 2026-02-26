@@ -15,7 +15,11 @@ namespace Command
     bool cap(Server &server, Client &client, const std::vector<std::string> &args);
     bool nick(Server &server, Client &client, const std::string &nickname);
     bool user(Server &server, Client &client, const std::vector<std::string> &args);
+
     bool mode(Server &server, Client &client, const std::vector<std::string> &args);
+    bool topic(Server &server, Client &client, const std::vector<std::string> &args);
+    bool invite(Server &server, Client &client, const std::vector<std::string> &args);
+
     bool ping(Server &server, Client &client, const std::vector<std::string> &args);
     bool join(Server &server, Client &client, const std::vector<std::string> &args);
     bool privmsg(Server &server, Client &client, const std::vector<std::string> &args);
