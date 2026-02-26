@@ -3,7 +3,7 @@
 
 bool Server::_signal = false;
 
-Server::Server(int port, std::string password, std::string server_name) : _server_name(server_name)
+Server::Server(int port, std::string password, std::string server_name) : _server_name(server_name), _bot("CalcBot")
 {
   int op = 1;
   struct pollfd server_poll;
@@ -11,6 +11,7 @@ Server::Server(int port, std::string password, std::string server_name) : _serve
 
   _password = password;
   _port = port;
+  _bot.start();
 
   serv_addr.sin_family = AF_INET;
   serv_addr.sin_addr.s_addr = INADDR_ANY;
@@ -104,10 +105,14 @@ void Server::acceptnewclient()
     }
     buffer[bytes] = '\0';
     _clients[fd]._buffer += buffer;
-    while ((pos = buf.find_first_of("\r\n")) != std::string::npos)
+    while ((pos = buf.find("\n")) != std::string::npos)
     {
       std::string request = buf.substr(0, pos);
-      buf.erase(0, pos + 2);
+      buf.erase(0, pos + 1);
+      
+      if (!request.empty() && request[request.size() - 1] == '\r')
+          request.erase(request.size() - 1);
+          
       if (!request.empty())
       {
         if (!_clients[fd].execute(*this, request))
@@ -235,4 +240,9 @@ void Server::sendMessageToUser(const std::string &nick, const std::string &messa
             break;
         }
     }
+}
+
+Bot &Server::getBot()
+{
+    return _bot;
 }

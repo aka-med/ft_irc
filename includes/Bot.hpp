@@ -15,15 +15,6 @@ class Bot
 private:
 	std::string					_nick;
 	bool						_running;
-	std::vector<std::string>	_quotes;
-
-	void		initQuotes();
-	std::string	cmdHelp() const;
-	std::string	cmdTime() const;
-	std::string	cmdInfo() const;
-	std::string	cmdHello(const std::string& sender) const;
-	std::string	cmdQuote() const;
-	std::string	cmdWho(const std::vector<std::string>& users) const;
 
 public:
 	Bot();
@@ -32,11 +23,7 @@ public:
 	Bot& operator=(const Bot& other);
 	~Bot();
 
-	std::string		processCommand(const std::string& sender, const std::string& message);
-	std::string		onJoin(const std::string& nick, const std::string& channel);
-	std::string		onPart(const std::string& nick, const std::string& channel);
-	std::string		onQuit(const std::string& nick);
-	std::string		onNickChange(const std::string& oldNick, const std::string& newNick);
+	std::string		processChannelMessage(const std::string& sender, const std::string& channel, const std::string& message);
 
 	const std::string&	getNick() const;
 	bool				isRunning() const;

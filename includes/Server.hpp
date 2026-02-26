@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <vector>
 #include "Channel.hpp"
+#include "Bot.hpp"
+
 class Server
 {
 private:
@@ -26,6 +28,7 @@ private:
   std::map<int, Client> _clients;
   std::vector<struct pollfd> _fds;
   std::map<std::string, std::vector<Channel> > _channels;
+  Bot _bot;
 
 public:
   static const bool FIRST_CHANNEL_JOIN = true;
@@ -49,4 +52,5 @@ public:
   Channel *getChannel(const std::string &channel_name);
   Client *getClientByNick(const std::string &nick) const;
   void sendMessageToUser(const std::string &nick, const std::string &message);
+  Bot &getBot();
 };
