@@ -9,14 +9,7 @@ bool Command::pass(Server &server, Client &client, const std::string &password)
     std::string reply;
     std::string target;
 
-    target = client.get_nick().empty() ? "*" : client.get_nick();
-    if (client.is_authenticated())
-    {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_ALREADYREGISTRED, target, "", "You are already authenticated");
-        client.send(reply);
-        return Client::KEEP_CLIENT_SOCKET;
-    }
-
+    target = client.get_nick();
     if (password == server.get_password())
     {
         client.set_authenticated(true);

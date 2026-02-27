@@ -56,21 +56,35 @@ bool Client::handle_CMD(Server &server, std::vector<std::string> &cmds)
         return Command::nick(server, *this, cmds.size() > 1 ? cmds[1] : "");
     else if(Utils::to_upper(cmds[0]) == "USER")
         return Command::user(server, *this, cmds);
-    else if(Utils::to_upper(cmds[0]) == "MODE")
-        return Command::mode(server, *this, cmds);
-    else if(Utils::to_upper(cmds[0]) == "PING")
-        return Command::ping(server, *this, cmds);
-    else if(Utils::to_upper(cmds[0]) == "JOIN")
-        return Command::join(server, *this, cmds);
-    else if(Utils::to_upper(cmds[0]) == "PRIVMSG")
-        return Command::privmsg(server, *this, cmds);
-    else if (Utils::to_upper(cmds[0]) == "PART")
-        return Command::part(server, *this, cmds);
     else if (Utils::to_upper(cmds[0]) == "QUIT")
-        return Command::quit(server, *this, cmds);
-    else if (Utils::to_upper(cmds[0]) == "KICK")
-        return Command::kick(server, *this, cmds);
-    return Command::unknown(server, *this, cmds);
+            return Command::quit(server, *this, cmds);
+    else if(full_conected())
+    {
+        if(Utils::to_upper(cmds[0]) == "MODE")
+            return Command::mode(server, *this, cmds);
+        else if(Utils::to_upper(cmds[0]) == "PING")
+            return Command::ping(server, *this, cmds);
+        else if(Utils::to_upper(cmds[0]) == "JOIN")
+            return Command::join(server, *this, cmds);
+        else if(Utils::to_upper(cmds[0]) == "PRIVMSG")
+            return Command::privmsg(server, *this, cmds);
+        else if (Utils::to_upper(cmds[0]) == "PART")
+            return Command::part(server, *this, cmds);
+        else if (Utils::to_upper(cmds[0]) == "KICK")
+            return Command::kick(server, *this, cmds);
+        else if (Utils::to_upper(cmds[0]) == "INVITE")
+            return Command::invite(server, *this, cmds);
+        else if (Utils::to_upper(cmds[0]) == "TOPIC")
+            return Command::topic(server, *this, cmds);
+        else
+            return Command::unknown(server, *this, cmds);
+    }
+    else
+    {
+        std::string reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, get_nick(), "", "You have not registered");
+        send(reply);
+        return (KEEP_CLIENT_SOCKET);
+    }
 }
 
 bool Client::execute(Server &server, std::string &req)
