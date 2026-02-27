@@ -10,13 +10,7 @@ bool Command::privmsg(Server &server, Client &client, const std::vector<std::str
     std::string reply;
     std::string target;
 
-    target = client.get_nick().empty() ? "*" : client.get_nick();
-    if (!client.is_authenticated())
-    {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, target, "", "You have not registered");
-        client.send(reply);
-        return Client::KEEP_CLIENT_SOCKET;
-    }
+    target = client.get_nick();
     if (args.size() < 3)
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "PRIVMSG", "Not enough parameters");

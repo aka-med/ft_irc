@@ -12,14 +12,7 @@ bool Command::join(Server &server, Client &client, const std::vector<std::string
     std::string users_list;
     Channel *channel = NULL;
 
-    target = client.get_nick().empty() ? "*" : client.get_nick();
-
-    if (!client.is_authenticated())
-    {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, target, "", "You have not registered");
-        client.send(reply);
-        return Client::KEEP_CLIENT_SOCKET;
-    }
+    target = client.get_nick();
     if (args.size() < 2)
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "JOIN", "Not enough parameters");
