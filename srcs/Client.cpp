@@ -1,4 +1,5 @@
 #include "../includes/Client.hpp"
+#include "../includes/Bot.hpp"
 #include "../includes/Server.hpp"
 #include "../includes/Utils.hpp"
 #include "../includes/Commands.hpp"
@@ -35,7 +36,7 @@ const std::string &Client::get_realname() const { return (_realname); }
 
 bool Client::is_authenticated() const { return (_authenticated); }
 
-bool Client::full_conected() const { return (_full_connected); }
+bool Client::full_connected() const { return (_full_connected); }
 
 #include "../includes/Parser.hpp"
 void Client::send(const std::string &message) const
@@ -49,35 +50,35 @@ bool Client::handle_CMD(Server &server, std::vector<std::string> &cmds)
         return Client::KEEP_CLIENT_SOCKET;
 
     if (Utils::to_upper(cmds[0]) == "CAP")
-        return Command::cap(server, *this, cmds);
+        return Command::cap(server, this, cmds);
     if(Utils::to_upper(cmds[0]) == "PASS")
-        return Command::pass(server, *this, cmds.size() > 1 ? cmds[1] : "");
+        return Command::pass(server, this, cmds.size() > 1 ? cmds[1] : "");
     else if (Utils::to_upper(cmds[0]) == "NICK")
-        return Command::nick(server, *this, cmds.size() > 1 ? cmds[1] : "");
+        return Command::nick(server, this, cmds.size() > 1 ? cmds[1] : "");
     else if(Utils::to_upper(cmds[0]) == "USER")
-        return Command::user(server, *this, cmds);
+        return Command::user(server, this, cmds);
     else if (Utils::to_upper(cmds[0]) == "QUIT")
-            return Command::quit(server, *this, cmds);
-    else if(full_conected())
+            return Command::quit(server, this, cmds);
+    else if(full_connected())
     {
         if(Utils::to_upper(cmds[0]) == "MODE")
-            return Command::mode(server, *this, cmds);
+            return Command::mode(server, this, cmds);
         else if(Utils::to_upper(cmds[0]) == "PING")
-            return Command::ping(server, *this, cmds);
+            return Command::ping(server, this, cmds);
         else if(Utils::to_upper(cmds[0]) == "JOIN")
-            return Command::join(server, *this, cmds);
+            return Command::join(server, this, cmds);
         else if(Utils::to_upper(cmds[0]) == "PRIVMSG")
-            return Command::privmsg(server, *this, cmds);
+            return Command::privmsg(server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "PART")
-            return Command::part(server, *this, cmds);
+            return Command::part(server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "KICK")
-            return Command::kick(server, *this, cmds);
+            return Command::kick(server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "INVITE")
-            return Command::invite(server, *this, cmds);
+            return Command::invite(server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "TOPIC")
-            return Command::topic(server, *this, cmds);
+            return Command::topic(server, this, cmds);
         else
-            return Command::unknown(server, *this, cmds);
+            return Command::unknown(server, this, cmds);
     }
     else
     {
@@ -129,4 +130,35 @@ size_t Client::get_channels_count() const
 const std::vector<std::string> &Client::get_channels_list() const
 {
     return _channels;
+}
+
+Client::~Client()
+{
+  if (_fd != -1)
+  {
+    close(_fd);
+    _fd = -1;
+  }
+}
+
+Client::Client(const Client& other)
+    : _fd(other._fd), _ip(other._ip), _nick(other._nick), _user(other._user), _realname(other._realname),
+      _channels(other._channels), _full_connected(other._full_connected), _authenticated(other._authenticated),
+      _buffer(other._buffer) {}
+
+Client& Client::operator=(const Client& other)
+{
+    if (this != &other)
+    {
+        _fd = other._fd;
+        _ip = other._ip;
+        _nick = other._nick;
+        _user = other._user;
+        _realname = other._realname;
+        _channels = other._channels;
+        _full_connected = other._full_connected;
+        _authenticated = other._authenticated;
+        _buffer = other._buffer;
+    }
+    return *this;
 }

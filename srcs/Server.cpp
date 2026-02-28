@@ -1,3 +1,6 @@
+#include "../includes/Channel.hpp"
+#include "../includes/Client.hpp"
+#include "../includes/Bot.hpp"
 #include "../includes/Server.hpp"
 #include <arpa/inet.h>
 
@@ -23,17 +26,29 @@ Server::Server(int port, std::string password, std::string server_name) : _serve
     throw std::runtime_error("socket creation failed");
 
   if (setsockopt(_serv_socketfd, SOL_SOCKET, SO_REUSEADDR, &op, sizeof(op)) < 0)
+  {
+    close(_serv_socketfd);
     throw std::runtime_error("set SO_REUSEADDR option failed");
+  }
 
   if (fcntl(_serv_socketfd, F_SETFL, O_NONBLOCK) < 0)
+  {
+    close(_serv_socketfd);
     throw std::runtime_error("set O_NONBLOCK option failed");
+  }
 
   if (bind(_serv_socketfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) <
       0)
+  {
+    close(_serv_socketfd);
     throw std::runtime_error("bind socket failed");
+  }
 
   if (listen(_serv_socketfd, SOMAXCONN) < 0)
+  {
+    close(_serv_socketfd);
     throw std::runtime_error("socket listen failed");
+  }
 
   server_poll.fd = _serv_socketfd;
   server_poll.events = POLLIN;
@@ -42,7 +57,8 @@ Server::Server(int port, std::string password, std::string server_name) : _serve
   _fds.push_back(server_poll);
 }
 
-void Server::run() {
+void Server::run()
+{
   while (_signal == false)
   {
     if (poll(&_fds[0], _fds.size(), -1) == -1 && _signal == false)
@@ -52,9 +68,14 @@ void Server::run() {
       if (_fds[i].revents & POLLIN)
       {
         if (_fds[i].fd == _serv_socketfd)
-          acceptnewclient(); // call the accept client function
+          acceptnewclient(); 
         else
-          acceptclientcommands(_fds[i].fd);//call recieve command function
+          acceptclientcommands(_fds[i].fd);
+      }
+      else if (_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+      {
+        removeClient(_fds[i].fd);
+        i--;
       }
     }
   }
@@ -62,7 +83,7 @@ void Server::run() {
 
 void Server::acceptnewclient()
 {
-  Client              client;
+  Client              *client = new Client();
   struct sockaddr_in  client_addr;
 	struct pollfd       client_poll;
   int                 client_sockfd;
@@ -72,11 +93,14 @@ void Server::acceptnewclient()
   client_sockfd = accept(_serv_socketfd, (sockaddr *)&client_addr, &len);
   if(client_sockfd < 0)
   {
+    delete client;
     std::cout << "client accept failed" << std::endl;
     return;
   }
   if(fcntl(client_sockfd, F_SETFL, O_NONBLOCK) < 0)
   {
+    delete client;
+    close(client_sockfd);
     std::cout << "client fcntl failed" << std::endl;
     return;
   }
@@ -84,8 +108,8 @@ void Server::acceptnewclient()
   client_poll.fd = client_sockfd;
   client_poll.events = POLLIN;
   client_poll.revents = 0;
-  client.set_ip(inet_ntoa(client_addr.sin_addr));
-  client.set_fd(client_sockfd);
+  client->set_ip(inet_ntoa(client_addr.sin_addr));
+  client->set_fd(client_sockfd);
   _clients[client_sockfd] = client;
   _fds.push_back(client_poll);
 }
@@ -95,7 +119,7 @@ void Server::acceptnewclient()
     char buffer[1024];
     int bytes;
     size_t pos;
-    std::string &buf = _clients[fd]._buffer;
+    std::string &buf = _clients[fd]->_buffer;
 
     bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes <= 0)
@@ -104,7 +128,7 @@ void Server::acceptnewclient()
       return;
     }
     buffer[bytes] = '\0';
-    _clients[fd]._buffer += buffer;
+    buf += buffer;
     while ((pos = buf.find("\n")) != std::string::npos)
     {
       std::string request = buf.substr(0, pos);
@@ -115,7 +139,7 @@ void Server::acceptnewclient()
           
       if (!request.empty())
       {
-        if (!_clients[fd].execute(*this, request))
+        if (!_clients[fd]->execute(*this, request))
         {
           removeClient(fd);
           return;
@@ -144,13 +168,12 @@ std::string Server::get_password() const { return _password; }
 
 bool Server::isNickTaken(const std::string &nick, int exclude_fd) const
 {
-  std::map<int, Client>::const_iterator it;
-
-  for (it = _clients.begin(); it != _clients.end(); ++it)
-    if (it->first != exclude_fd && it->second.get_nick() == nick)
-      return true;
-  
-  return false;
+    for (std::map<int, Client *>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second->get_nick() == nick && it->second->get_fd() != exclude_fd)
+            return true;
+    }
+    return false;
 }
 
 bool Server::channelExists(const std::string &channel_name) const
@@ -160,7 +183,14 @@ bool Server::channelExists(const std::string &channel_name) const
 
 void Server::removeClient(int fd)
 {
-  close(fd);
+  std::map<std::string, Channel>::iterator it = _channels.begin();
+  while (it != _channels.end())
+  {
+    std::string channel_name = it->first;
+    it++;
+    removeClientFromChannel(channel_name, _clients[fd]);
+  }
+  delete _clients[fd];
   _clients.erase(fd);
   for (size_t i = 0; i < _fds.size(); i++)
   {
@@ -172,71 +202,61 @@ void Server::removeClient(int fd)
   }
 }
 
-void Server::addClientToChannel(const std::string &channel_name, const Client &client, bool first_join)
+void Server::addClientToChannel(const std::string &channel_name, Client *client, bool first_join)
 {
-    if (first_join)
-    {
-        Channel new_channel(channel_name);
-        new_channel.add_user(client);
-        new_channel.add_operator(client);
-        _channels[channel_name].push_back(new_channel);
-        return;
-    }
-    std::vector<Channel> &channels = _channels[channel_name];
-    for(size_t i = 0; i < channels.size(); i++)
-    {
-        if(channels[i].get_name() == channel_name)
-        {
-            channels[i].add_user(client);
-            break; 
-        }
-    }
+  if (!client)
+    return;
+  if (first_join)
+  {
+      Channel new_channel(channel_name);
+      new_channel.add_user(client);
+      new_channel.add_operator(client);
+      _channels[channel_name] = new_channel;
+      return;
+  }
+  _channels[channel_name].add_user(client);
 }
 
-void Server::removeClientFromChannel(const std::string &channel_name, const Client &client)
+void Server::removeClientFromChannel(const std::string &channel_name, Client *client)
 {
-  std::vector<Channel> &channels = _channels[channel_name];
-  for(size_t i = 0; i < channels.size(); i++)
-  {
-    if(channels[i].get_name() == channel_name)
-    {
-      channels[i].remove_user(client);
-      break;
-    }
-  }
+  std::map<std::string, Channel>::iterator it = _channels.find(channel_name);
+  if (it == _channels.end())
+    return;
+  Channel &channel = it->second;
+  channel.remove_user(client);
+  if (channel.is_operator(client))
+    channel.remove_operator(client);
+  if (channel.is_user_invited(client))
+    channel.remove_invited_user(client);
+  if (channel.get_users_count() == 0)
+    _channels.erase(it);
 }
 
 Channel *Server::getChannel(const std::string &channel_name)
 {
-    std::vector<Channel> &channels = _channels[channel_name];
-    for(size_t i = 0; i < channels.size(); i++)
-    {
-        if(channels[i].get_name() == channel_name)
-        {
-            return &channels[i];
-        }
-    }
+    std::map<std::string, Channel>::iterator it = _channels.find(channel_name);
+    if (it != _channels.end())
+        return &(it->second);
     return NULL;
 }
 
 Client *Server::getClientByNick(const std::string &nick) const
 {
-    std::map<int, Client>::const_iterator it;
-
-    for (it = _clients.begin(); it != _clients.end(); ++it)
-        if (it->second.get_nick() == nick)
-            return const_cast<Client *>(&(it->second));
-    
+    for (std::map<int, Client *>::const_iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second->get_nick() == nick)
+            return it->second;
+    }
     return NULL;
 }
 
 void Server::sendMessageToUser(const std::string &nick, const std::string &message)
 {
-    for (std::map<int, Client>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
-        if (it->second.get_nick() == nick)
+        if (it->second->get_nick() == nick)
         {
-            it->second.send(message);
+            it->second->send(message);
             break;
         }
     }
@@ -245,4 +265,40 @@ void Server::sendMessageToUser(const std::string &nick, const std::string &messa
 Bot &Server::getBot()
 {
     return _bot;
+}
+
+Server::~Server()
+{
+  if (_serv_socketfd != -1)
+  {
+    close(_serv_socketfd);
+    _serv_socketfd = -1;
+  }
+  for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    delete it->second;
+  _channels.clear();
+  _fds.clear();
+  _clients.clear();
+  _bot.stop();
+}
+
+Server &Server::operator=(const Server& other)
+{
+    if (this != &other)
+    {
+        _port = other._port;
+        _password = other._password;
+        _server_name = other._server_name;
+        for(std::map<int, Client *>::const_iterator it = other._clients.begin(); it != other._clients.end(); ++it)
+            _clients[it->first] = new Client(*(it->second));
+        _fds = other._fds;
+        _channels = other._channels;
+        _bot = other._bot;
+    }
+    return *this;
+}
+
+Server::Server(const Server& other)
+{
+  *this = other;
 }

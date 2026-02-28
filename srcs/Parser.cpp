@@ -1,4 +1,5 @@
 #include "../includes/Parser.hpp"
+#include "../includes/Utils.hpp"
 
 IRCMessage Parser::parseLine(const std::string& line)
 {
@@ -30,10 +31,10 @@ IRCMessage Parser::parseLine(const std::string& line)
 	size_t sp = remaining.find(' ');
 	if (sp == std::string::npos)
 	{
-		msg.command = toUpper(remaining);
+		msg.command = Utils::to_upper(remaining);
 		return (msg);
 	}
-	msg.command = toUpper(remaining.substr(0, sp));
+	msg.command = Utils::to_upper(remaining.substr(0, sp));
 	remaining = remaining.substr(sp + 1);
 	while (!remaining.empty() && remaining[0] == ' ')
 		remaining.erase(0, 1);
@@ -87,15 +88,4 @@ bool Parser::validatePassword(const std::string& password)
 			return (false);
 	}
 	return (true);
-}
-
-std::string Parser::toUpper(const std::string& str)
-{
-	std::string result = str;
-	for (size_t i = 0; i < result.size(); i++)
-	{
-		if (result[i] >= 'a' && result[i] <= 'z')
-			result[i] = result[i] - 32;
-	}
-	return (result);
 }

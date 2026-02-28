@@ -3,8 +3,8 @@
 
 #include <iostream>
 #include <string>
-#include "../includes/Server.hpp"
-#include "../includes/Client.hpp"
+#include <vector>
+#include <sstream>
 
 namespace Utils
 {
