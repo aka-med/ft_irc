@@ -9,11 +9,11 @@ class Client;
 class Channel
 {
     private:
-        std::vector<Client> _users;
+        std::vector<Client*> _users;
         std::string _name;
         std::string _topic;
-        std::vector<Client> _operators;
-        std::vector<Client> _invited_users;
+        std::vector<Client*> _operators;
+        std::vector<Client*> _invited_users;
         bool _t;
         bool _i;
         bool _k;
@@ -21,16 +21,20 @@ class Channel
         std::string _key;
         int _limit;
     public:
+        Channel();
+        ~Channel();
+        Channel(const Channel& other);
+        Channel& operator=(const Channel& other);
         Channel(std::string name);
         const std::string &get_name() const;
         const std::string &get_topic() const;
         void set_topic(const std::string &topic);
-        void add_user(const Client &client);
-        void remove_user(const Client &client);
-        bool is_user_in_channel(const Client &client) const;
-        void add_operator(const Client &client);
-        void remove_operator(const Client &client);
-        bool is_operator(const Client &client) const;
+        void add_user(Client *client);
+        void remove_user(Client *client);
+        bool is_user_in_channel(Client *client) const;
+        void add_operator(Client *client);
+        void remove_operator(Client *client);
+        bool is_operator(Client *client) const;
         void set_key(const std::string &key);
         bool get_k_flag() const;
         bool get_i_flag() const;
@@ -46,9 +50,9 @@ class Channel
         size_t get_users_count() const;
         size_t get_operators_count() const;
         std::string get_users_list_names() const;
-        void add_invited_user(const Client &client);
-        void remove_invited_user(const Client &client);
-        bool is_user_invited(const Client &client) const;
-        void broadcast(const std::string &message, const Client &sender) const;
+        void add_invited_user(Client *client);
+        void remove_invited_user(Client *client);
+        bool is_user_invited(Client *client) const;
+        void broadcast(const std::string &message, Client *sender);
 };
 #endif

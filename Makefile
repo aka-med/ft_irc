@@ -1,6 +1,6 @@
 NAME = ircserv
 CXX = c++
-CXXFLAGS = -Wall -Wextra -Werror
+CXXFLAGS = -Wall -Wextra -Werror -g
 VERSION = -std=c++98 -I$(INCS_DIR)
 
 SRCS_DIR = srcs/

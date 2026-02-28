@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <vector>
+
 class Server;
 
 class Client
@@ -22,7 +23,9 @@ class Client
         static const bool REMOVE_CLIENT_SOCKET = false;
         static const bool KEEP_CLIENT_SOCKET = true;
         Client();
-
+        ~Client();
+        Client(const Client& other);
+        Client& operator=(const Client& other);
         void set_fd(int sockfd);
         void set_nick(const std::string &nick);
         void set_user(const std::string &user);
@@ -37,7 +40,7 @@ class Client
         const std::string &get_ip() const;
         const std::string &get_realname() const;
         bool is_authenticated() const;
-        bool full_conected() const;
+        bool full_connected() const;
 
         bool execute(Server &server, std::string &request);
         bool handle_CMD(Server &server, std::vector<std::string> &req);

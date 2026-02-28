@@ -6,8 +6,6 @@
 #include <sstream>
 #include <cstdlib>
 
-class Server;
-
 struct IRCMessage
 {
 	std::string					prefix;
@@ -17,16 +15,11 @@ struct IRCMessage
 	bool empty() const { return (command.empty()); }
 };
 
-class Parser
+namespace Parser
 {
-private:
-	Parser();
-
-public:
-	static IRCMessage	parseLine(const std::string& line);
-	static int			validatePort(const std::string& portStr);
-	static bool			validatePassword(const std::string& password);
-	static std::string	toUpper(const std::string& str);
+	IRCMessage	parseLine(const std::string& line);
+	int			validatePort(const std::string& portStr);
+	bool			validatePassword(const std::string& password);
 };
 
 #endif

@@ -1,3 +1,4 @@
+#include "../includes/Bot.hpp"
 #include "../includes/Server.hpp"
 #include "../includes/Parser.hpp"
 
@@ -35,8 +36,8 @@ int main(int ac, char **av)
     catch(const std::exception& e)
     {
         std::cerr << e.what() << '\n';
-        // we should clean and return 1
+        return (1);
     }
     
-
+    return (0);
 }
