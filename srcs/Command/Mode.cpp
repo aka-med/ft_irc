@@ -106,7 +106,7 @@ void broadcast_changes(mode_data_t &mode_dt)
 ///////////////////////////////////---- mode i function-----//////////////////////////////////////////
 
 
-void mode_i(mode_data_t &mode_dt)
+void mode_i_flag(mode_data_t &mode_dt)
 {
     if(mode_dt.sign == '+' && !mode_dt.channel.get_i_flag())
         mode_dt.channel.set_i_flag(true);
@@ -134,7 +134,7 @@ void mode_t_flag(mode_data_t &mode_dt)
 
 ///////////////////////////////////---- mode k function-----//////////////////////////////////////////
 
-void mode_k(mode_data_t &mode_dt)
+void mode_k_flag(mode_data_t &mode_dt)
 {
     std::string reply;
 
@@ -143,9 +143,9 @@ void mode_k(mode_data_t &mode_dt)
         mode_dt.channel.set_k_flag(false);
         mode_dt.channel.set_key("");
     }
-    else if (mode_dt.sign == '+' && !mode_dt.channel.get_k_flag())
+    else if (mode_dt.sign == '+')
     {
-        if(mode_dt.args.size() < mode_dt.params_index)
+        if(mode_dt.args.size() <= mode_dt.params_index)
         {
             reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
             mode_dt.client->send(reply);
@@ -171,11 +171,11 @@ void mode_k(mode_data_t &mode_dt)
 ///////////////////////////////////---- mode o function-----//////////////////////////////////////////
 
 
-void mode_o(mode_data_t &mode_dt)
+void mode_o_flag(mode_data_t &mode_dt)
 {
     std::string reply;
 
-    if(mode_dt.args.size() < mode_dt.params_index)
+    if(mode_dt.args.size() <= mode_dt.params_index)
     {
         reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
         mode_dt.client->send(reply);
@@ -216,7 +216,7 @@ void mode_o(mode_data_t &mode_dt)
 
 
 
-void mode_l(mode_data_t &mode_dt)
+void mode_l_flag(mode_data_t &mode_dt)
 {
     std::string reply;
 
@@ -225,9 +225,9 @@ void mode_l(mode_data_t &mode_dt)
         mode_dt.channel.set_l_flag(false);
         mode_dt.channel.set_limit(-1);
     }
-    else if (mode_dt.sign == '+' && !mode_dt.channel.get_l_flag())
+    else if (mode_dt.sign == '+')
     {
-        if(mode_dt.args.size() < mode_dt.params_index)
+        if(mode_dt.args.size() <= mode_dt.params_index)
         {
             reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
             mode_dt.client->send(reply);
@@ -271,15 +271,15 @@ void set_mods(Server &server, Client *client, const std::vector<std::string> &ar
                 mode_dt.sign = str_flags[i];
         }
         else if(str_flags[i] == 'i')
-            mode_i(mode_dt);
+            mode_i_flag(mode_dt);
         else if (str_flags[i] == 't')
             mode_t_flag(mode_dt);
         else if (str_flags[i] == 'k')
-            mode_k(mode_dt);
+            mode_k_flag(mode_dt);
         else if (str_flags[i] == 'o')
-            mode_o(mode_dt);
+            mode_o_flag(mode_dt);
         else if(str_flags[i] == 'l')
-            mode_l(mode_dt);
+            mode_l_flag(mode_dt);
         else
         {
             std::string str_char = "";
