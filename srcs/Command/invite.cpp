@@ -19,7 +19,7 @@ bool Command::invite(Server &server, Client *client, const std::vector<std::stri
         return Client::KEEP_CLIENT_SOCKET;
     }
     std::string channel_name = args[2];
-    if(args[2][0] != '#' || !server.channelExists(channel_name))
+    if(channel_name.empty() || channel_name[0] != '#' || !server.channelExists(channel_name))
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
         client->send(reply);
@@ -42,7 +42,7 @@ bool Command::invite(Server &server, Client *client, const std::vector<std::stri
     }
     if(channel->is_user_in_channel(trgclient))
     {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_USERONCHANNEL, nickname, channel_name, "is already on channel");
+        reply = Reply::format_reply(server.get_name(), Reply::ERR_USERONCHANNEL, target, nickname + " " + channel_name, "is already on channel");
         client->send(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }

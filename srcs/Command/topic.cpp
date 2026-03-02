@@ -12,14 +12,14 @@ bool Command::topic(Server &server, Client *client, const std::vector<std::strin
     std::string target;
 
     target = client->get_nick();
-    if(args.size() < 3)
+    if(args.size() < 2)
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "TOPIC", "Not enough parameters");
         client->send(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
     std::string channel_name = args[1];
-    if(args[1][0] != '#' || !server.channelExists(channel_name))
+    if(channel_name.empty() || channel_name[0] != '#' || !server.channelExists(channel_name))
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
         client->send(reply);
