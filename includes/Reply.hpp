@@ -47,6 +47,7 @@ namespace Reply
 
     const std::string RPL_CHANNELMODEIS = "324";   // Mode query reply
     const std::string ERR_UNKNOWNMODE   = "472";   // Unknown mode character
+    const std::string ERR_KEYSET = "467";
 
     const std::string ERR_INVALIDMODEPARM = "696";
     const std::string RPL_INVITING = "341";
