@@ -10,7 +10,6 @@ bool Command::nick(Server &server, Client *client, const std::string &nickname)
     std::string reply;
     std::string target = client->get_nick().empty() ? "*" : client->get_nick();
     std::string old_nick = client->get_nick();
-    target = client->get_nick();
     if(!client->is_authenticated())
     {
         reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, target, "", "You have not registered");
