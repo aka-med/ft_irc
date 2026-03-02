@@ -143,7 +143,7 @@ void mode_k_flag(mode_data_t &mode_dt)
         mode_dt.channel.set_k_flag(false);
         mode_dt.channel.set_key("");
     }
-    else if (mode_dt.sign == '+')
+    else if (mode_dt.sign == '+' && !mode_dt.channel.get_k_flag())
     {
         if(mode_dt.args.size() <= mode_dt.params_index)
         {
@@ -161,6 +161,12 @@ void mode_k_flag(mode_data_t &mode_dt)
         mode_dt.channel.set_k_flag(true);
         mode_dt.channel.set_key(key);
         track_flags_func(mode_dt, key);
+    }
+    else if (mode_dt.sign == '+' && mode_dt.channel.get_k_flag())
+    {
+        reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_KEYSET, mode_dt.client->get_nick(), mode_dt.channel.get_name(), "Channel key already set");
+        mode_dt.client->send(reply);
+        return;
     }
     else
         return;
