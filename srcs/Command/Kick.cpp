@@ -54,6 +54,7 @@ bool Command::kick(Server &server, Client *client, const std::vector<std::string
         channel->broadcast(reply, client);
         client->send(reply);
         server.removeClientFromChannel(channel_name, user_client);
+        user_client->remove_channel_from_client(channel_name);
     }
     else
     {
