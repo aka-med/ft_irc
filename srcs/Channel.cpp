@@ -206,7 +206,7 @@ void Channel::broadcast(const std::string &message, Client *sender)
     for (size_t i = 0; i < _users.size(); i++)
     {
         if (_users[i]->get_fd() != sender->get_fd())
-            _users[i]->send(message);
+            _users[i]->add_to_queue(message);
     }
 }
 

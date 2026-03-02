@@ -8,7 +8,7 @@
 
 Client::Client()
     : _fd(-1), _ip(""), _nick(""), _user(""), _realname(""), _full_connected(false), _authenticated(false),
-      _buffer("") {}
+    _server(NULL), _buffer(""), _output_buffer("") {}
 
 void Client::set_fd(int sockfd) { _fd = sockfd; }
 
@@ -38,57 +38,72 @@ bool Client::is_authenticated() const { return (_authenticated); }
 
 bool Client::full_connected() const { return (_full_connected); }
 
-#include "../includes/Parser.hpp"
-void Client::send(const std::string &message) const
+void Client::set_server(Server *server) { _server = server; }
+
+void Client::send(void)
 {
-    ::send(_fd, message.c_str(), message.size(), 0);
+    if (_fd == -1 || _output_buffer.empty())
+        return;
+    ssize_t bytes_sent = ::send(_fd, _output_buffer.c_str(), _output_buffer.size(), 0);
+    if (bytes_sent < 0)
+    {
+        std::cerr << "Failed to send message to client " << _nick << ": " << strerror(errno) << std::endl;
+        return;
+    }
+    _output_buffer.erase(0, bytes_sent);
+    if (_output_buffer.empty())
+    {  
+        struct pollfd *pollfd = _server->getPollfdByClientFd(_fd);
+        if (pollfd)
+            pollfd->events &= ~POLLOUT;
+    }
 }
 
-bool Client::handle_CMD(Server &server, std::vector<std::string> &cmds)
+bool Client::handle_CMD(std::vector<std::string> &cmds)
 {
     if(cmds.size() < 1)
         return Client::KEEP_CLIENT_SOCKET;
 
     if (Utils::to_upper(cmds[0]) == "CAP")
-        return Command::cap(server, this, cmds);
+        return Command::cap(_server, this, cmds);
     if(Utils::to_upper(cmds[0]) == "PASS")
-        return Command::pass(server, this, cmds.size() > 1 ? cmds[1] : "");
+        return Command::pass(_server, this, cmds.size() > 1 ? cmds[1] : "");
     else if (Utils::to_upper(cmds[0]) == "NICK")
-        return Command::nick(server, this, cmds.size() > 1 ? cmds[1] : "");
+        return Command::nick(_server, this, cmds.size() > 1 ? cmds[1] : "");
     else if(Utils::to_upper(cmds[0]) == "USER")
-        return Command::user(server, this, cmds);
+        return Command::user(_server, this, cmds);
     else if (Utils::to_upper(cmds[0]) == "QUIT")
-            return Command::quit(server, this, cmds);
+            return Command::quit(_server, this, cmds);
     else if(full_connected())
     {
         if(Utils::to_upper(cmds[0]) == "MODE")
-            return Command::mode(server, this, cmds);
+            return Command::mode(_server, this, cmds);
         else if(Utils::to_upper(cmds[0]) == "PING")
-            return Command::ping(server, this, cmds);
+            return Command::ping(_server, this, cmds);
         else if(Utils::to_upper(cmds[0]) == "JOIN")
-            return Command::join(server, this, cmds);
+            return Command::join(_server, this, cmds);
         else if(Utils::to_upper(cmds[0]) == "PRIVMSG")
-            return Command::privmsg(server, this, cmds);
+            return Command::privmsg(_server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "PART")
-            return Command::part(server, this, cmds);
+            return Command::part(_server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "KICK")
-            return Command::kick(server, this, cmds);
+            return Command::kick(_server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "INVITE")
-            return Command::invite(server, this, cmds);
+            return Command::invite(_server, this, cmds);
         else if (Utils::to_upper(cmds[0]) == "TOPIC")
-            return Command::topic(server, this, cmds);
+            return Command::topic(_server, this, cmds);
         else
-            return Command::unknown(server, this, cmds);
+            return Command::unknown(_server, this, cmds);
     }
     else
     {
-        std::string reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTREGISTERED, get_nick(), "", "You have not registered");
-        send(reply);
+        std::string reply = Reply::format_reply(_server->get_name(), Reply::ERR_NOTREGISTERED, get_nick(), "", "You have not registered");
+        add_to_queue(reply);
         return (KEEP_CLIENT_SOCKET);
     }
 }
 
-bool Client::execute(Server &server, std::string &req)
+bool Client::execute(std::string &req)
 {
   std::cout << "Client " << _nick << " number " << _fd
             << " executed command: " << req << std::endl;
@@ -102,7 +117,7 @@ bool Client::execute(Server &server, std::string &req)
   for (size_t i = 0; i < msg.params.size(); ++i)
     split_request.push_back(msg.params[i]);
 
-  return handle_CMD(server, split_request);
+  return handle_CMD(split_request);
 }
 
 void Client::add_channel_to_client(const std::string &channel_name)
@@ -144,7 +159,7 @@ Client::~Client()
 Client::Client(const Client& other)
     : _fd(other._fd), _ip(other._ip), _nick(other._nick), _user(other._user), _realname(other._realname),
       _channels(other._channels), _full_connected(other._full_connected), _authenticated(other._authenticated),
-      _buffer(other._buffer) {}
+      _server(other._server), _buffer(other._buffer), _output_buffer(other._output_buffer) {}
 
 Client& Client::operator=(const Client& other)
 {
@@ -159,6 +174,22 @@ Client& Client::operator=(const Client& other)
         _full_connected = other._full_connected;
         _authenticated = other._authenticated;
         _buffer = other._buffer;
+        _output_buffer = other._output_buffer;
+        _server = other._server;
     }
     return *this;
+}
+
+void Client::add_to_queue(const std::string &message)
+{
+    if (!_server || message.empty())
+        return;
+    _output_buffer += message;
+
+    if (!_output_buffer.empty())
+    {
+        struct pollfd *pollfd = _server->getPollfdByClientFd(_fd);
+        if (pollfd)
+            pollfd->events |= POLLOUT;
+    }
 }

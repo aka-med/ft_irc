@@ -5,7 +5,7 @@
 #include "../../includes/Reply.hpp"
 #include "../../includes/Utils.hpp"
 
-bool Command::cap(Server &server, Client *client, const std::vector<std::string> &args)
+bool Command::cap(Server *server, Client *client, const std::vector<std::string> &args)
 {
     std::string reply;
     std::string subcommand;
@@ -16,8 +16,8 @@ bool Command::cap(Server &server, Client *client, const std::vector<std::string>
     subcommand = Utils::to_upper(args[1]);
     if (subcommand == "LS")
     {
-        reply = ":" + server.get_name() + " CAP * LS :\r\n"; 
-        client->send(reply);
+        reply = ":" + server->get_name() + " CAP * LS :\r\n"; 
+        client->add_to_queue(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
     return Client::KEEP_CLIENT_SOCKET;

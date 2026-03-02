@@ -3,6 +3,7 @@
 #include "../includes/Bot.hpp"
 #include "../includes/Server.hpp"
 #include <arpa/inet.h>
+#include <sys/types.h>
 
 bool Server::_signal = false;
 
@@ -63,20 +64,33 @@ void Server::run()
   {
     if (poll(&_fds[0], _fds.size(), -1) == -1 && _signal == false)
       throw std::runtime_error("poll failed");
-    for (size_t i = 0; i < _fds.size(); i++)
+    for (ssize_t i = (ssize_t)_fds.size() - 1; i >= 0; i--)
     {
+      int client_fd = _fds[i].fd;
       if (_fds[i].revents & POLLIN)
       {
-        if (_fds[i].fd == _serv_socketfd)
+        if (client_fd == _serv_socketfd)
           acceptnewclient(); 
         else
-          acceptclientcommands(_fds[i].fd);
+        {
+          acceptclientcommands(client_fd);
+          if (_clients.find(client_fd) == _clients.end())
+            continue;
+        }
       }
-      else if (_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+      if (_fds[i].revents & POLLOUT)
       {
-        removeClient(_fds[i].fd);
-        i--;
+        std::map<int, Client*>::iterator it = _clients.find(client_fd);
+        if (it != _clients.end())
+        {
+          if (!it->second->_output_buffer.empty())
+            it->second->send();
+          else
+            _fds[i].events &= ~POLLOUT;
+        }
       }
+      if (_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
+        removeClient(client_fd);
     }
   }
 }
@@ -94,14 +108,14 @@ void Server::acceptnewclient()
   if(client_sockfd < 0)
   {
     delete client;
-    std::cout << "client accept failed" << std::endl;
+    std::cerr << "client accept failed" << std::endl;
     return;
   }
   if(fcntl(client_sockfd, F_SETFL, O_NONBLOCK) < 0)
   {
     delete client;
     close(client_sockfd);
-    std::cout << "client fcntl failed" << std::endl;
+    std::cerr << "client fcntl failed" << std::endl;
     return;
   }
 
@@ -110,6 +124,7 @@ void Server::acceptnewclient()
   client_poll.revents = 0;
   client->set_ip(inet_ntoa(client_addr.sin_addr));
   client->set_fd(client_sockfd);
+  client->set_server(this);
   _clients[client_sockfd] = client;
   _fds.push_back(client_poll);
 }
@@ -139,7 +154,7 @@ void Server::acceptnewclient()
           
       if (!request.empty())
       {
-        if (!_clients[fd]->execute(*this, request))
+        if (!_clients[fd]->execute(request))
         {
           removeClient(fd);
           return;
@@ -256,7 +271,7 @@ void Server::sendMessageToUser(const std::string &nick, const std::string &messa
     {
         if (it->second->get_nick() == nick)
         {
-            it->second->send(message);
+            it->second->add_to_queue(message);
             break;
         }
     }
@@ -276,9 +291,6 @@ Server::~Server()
   }
   for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     delete it->second;
-  _channels.clear();
-  _fds.clear();
-  _clients.clear();
   _bot.stop();
 }
 
@@ -289,16 +301,30 @@ Server &Server::operator=(const Server& other)
         _port = other._port;
         _password = other._password;
         _server_name = other._server_name;
+        for(std::map<int, Client *>::const_iterator it = this->_clients.begin(); it != this->_clients.end(); ++it)
+          delete it->second;
+        _clients.clear();
         for(std::map<int, Client *>::const_iterator it = other._clients.begin(); it != other._clients.end(); ++it)
             _clients[it->first] = new Client(*(it->second));
         _fds = other._fds;
         _channels = other._channels;
         _bot = other._bot;
+        _serv_socketfd = other._serv_socketfd;
     }
     return *this;
 }
 
-Server::Server(const Server& other)
+Server::Server(const Server& other) :  _serv_socketfd(-1), _bot("") 
 {
   *this = other;
+}
+
+struct pollfd *Server::getPollfdByClientFd(int client_fd)
+{
+    for (size_t i = 0; i < _fds.size(); i++)
+    {
+        if (_fds[i].fd == client_fd)
+            return &_fds[i];
+    }
+    return NULL;
 }

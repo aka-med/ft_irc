@@ -5,7 +5,7 @@
 #include "../../includes/Channel.hpp"
 #include "../../includes/Reply.hpp"
 #include "../../includes/Utils.hpp"
-bool Command::join(Server &server, Client *client, const std::vector<std::string> &args)
+bool Command::join(Server *server, Client *client, const std::vector<std::string> &args)
 {
     std::string reply;
     std::string target;
@@ -16,81 +16,81 @@ bool Command::join(Server &server, Client *client, const std::vector<std::string
     target = client->get_nick();
     if (args.size() < 2)
     {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "JOIN", "Not enough parameters");
-        client->send(reply);
+        reply = Reply::format_reply(server->get_name(), Reply::ERR_NEEDMOREPARAMS, target, "JOIN", "Not enough parameters");
+        client->add_to_queue(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
     channel_name = args[1];
     if (channel_name.empty() || channel_name[0] != '#')
     {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
-        client->send(reply);
+        reply = Reply::format_reply(server->get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
+        client->add_to_queue(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
-    if (!server.channelExists(channel_name))
+    if (!server->channelExists(channel_name))
     {
-        server.addClientToChannel(channel_name, client, Server::FIRST_CHANNEL_JOIN);
+        server->addClientToChannel(channel_name, client, Server::FIRST_CHANNEL_JOIN);
         client->add_channel_to_client(channel_name);
-        channel = server.getChannel(channel_name);
+        channel = server->getChannel(channel_name);
         
         reply = Reply::format_command(client, "JOIN", channel_name, "");
-        client->send(reply);
+        client->add_to_queue(reply);
 
-        reply = Reply::format_reply(server.get_name(), Reply::RPL_NOTOPIC, target, channel_name, "No topic is set");
-        client->send(reply);
+        reply = Reply::format_reply(server->get_name(), Reply::RPL_NOTOPIC, target, channel_name, "No topic is set");
+        client->add_to_queue(reply);
     }
     else
     {
-        channel = server.getChannel(channel_name);
+        channel = server->getChannel(channel_name);
         if (!channel)
         {
-            reply = Reply::format_reply(server.get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
-            client->send(reply);
+            reply = Reply::format_reply(server->get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
+            client->add_to_queue(reply);
             return Client::KEEP_CLIENT_SOCKET;
         }
         if (channel->is_user_in_channel(client))
         {
-            reply = Reply::format_reply(server.get_name(), Reply::ERR_USERONCHANNEL, target, channel_name, "You are already on that channel");
-            client->send(reply);
+            reply = Reply::format_reply(server->get_name(), Reply::ERR_USERONCHANNEL, target, channel_name, "You are already on that channel");
+            client->add_to_queue(reply);
             return Client::KEEP_CLIENT_SOCKET;
         }
         if (channel->get_i_flag())
         {
             if (!channel->is_user_invited(client))
             {
-                reply = Reply::format_reply(server.get_name(), Reply::ERR_INVITEONLYCHAN, target, channel_name, "Cannot join channel (+i)");
-                client->send(reply);
+                reply = Reply::format_reply(server->get_name(), Reply::ERR_INVITEONLYCHAN, target, channel_name, "Cannot join channel (+i)");
+                client->add_to_queue(reply);
                 return Client::KEEP_CLIENT_SOCKET;
             }
             channel->remove_invited_user(client);
         }
         if (channel->get_l_flag() && channel->get_users_count() >= static_cast<size_t>(channel->get_limit()))
         {
-            reply = Reply::format_reply(server.get_name(), Reply::ERR_CHANNELISFULL, target, channel_name, "Cannot join channel (+l)");
-            client->send(reply);
+            reply = Reply::format_reply(server->get_name(), Reply::ERR_CHANNELISFULL, target, channel_name, "Cannot join channel (+l)");
+            client->add_to_queue(reply);
             return Client::KEEP_CLIENT_SOCKET;
         }
         if (channel->get_k_flag() && (args.size() < 3 || !channel->check_key(args[2])))
         {
-            reply = Reply::format_reply(server.get_name(), Reply::ERR_BADCHANNELKEY, target, channel_name, "Cannot join channel (+k)");
-            client->send(reply);
+            reply = Reply::format_reply(server->get_name(), Reply::ERR_BADCHANNELKEY, target, channel_name, "Cannot join channel (+k)");
+            client->add_to_queue(reply);
             return Client::KEEP_CLIENT_SOCKET;
         }
-        server.addClientToChannel(channel_name, client, Server::OTHER_CHANNEL_JOIN);
+        server->addClientToChannel(channel_name, client, Server::OTHER_CHANNEL_JOIN);
         client->add_channel_to_client(channel_name);
         reply = Reply::format_command(client, "JOIN", channel_name, "");
         channel->broadcast(reply, client);
-        client->send(reply);
+        client->add_to_queue(reply);
 
         if (channel->get_topic().empty())
-            client->send(Reply::format_reply(server.get_name(), Reply::RPL_NOTOPIC, target, channel_name, "No topic is set"));
+            client->add_to_queue(Reply::format_reply(server->get_name(), Reply::RPL_NOTOPIC, target, channel_name, "No topic is set"));
         else
-            client->send(Reply::format_reply(server.get_name(), Reply::RPL_TOPIC, target, channel_name, channel->get_topic()));
+            client->add_to_queue(Reply::format_reply(server->get_name(), Reply::RPL_TOPIC, target, channel_name, channel->get_topic()));
     }
     users_list = channel->get_users_list_names();
-    reply = Reply::format_reply(server.get_name(), Reply::RPL_NAMREPLY, target, "= " + channel_name, users_list);
-    client->send(reply);
-    reply = Reply::format_reply(server.get_name(), Reply::RPL_ENDOFNAMES, target, channel_name, "End of /NAMES list");
-    client->send(reply);
+    reply = Reply::format_reply(server->get_name(), Reply::RPL_NAMREPLY, target, "= " + channel_name, users_list);
+    client->add_to_queue(reply);
+    reply = Reply::format_reply(server->get_name(), Reply::RPL_ENDOFNAMES, target, channel_name, "End of /NAMES list");
+    client->add_to_queue(reply);
     return Client::KEEP_CLIENT_SOCKET;
 }

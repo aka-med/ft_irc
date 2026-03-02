@@ -27,7 +27,7 @@ private:
   std::string _password;
   std::string _server_name;
   std::map<int, Client *> _clients;
-  std::vector<struct pollfd> _fds;
+  std::vector<struct pollfd > _fds;
   std::map<std::string, Channel> _channels;
   Bot _bot;
 
@@ -58,4 +58,7 @@ public:
   Client *getClientByNick(const std::string &nick) const;
   void sendMessageToUser(const std::string &nick, const std::string &message);
   Bot &getBot();
+
+  struct pollfd *getPollfdByClientFd(int client_fd);
+
 };

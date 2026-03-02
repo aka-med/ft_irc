@@ -2,7 +2,8 @@
 
 #include <iostream>
 #include <vector>
-
+#include <errno.h>
+#include <cstring>
 class Server;
 
 class Client
@@ -16,10 +17,11 @@ class Client
         std::vector<std::string> _channels;
         bool       _full_connected;
         bool       _authenticated;
-
-    
+        Server     *_server;
+        
     public:
         std::string _buffer;
+        std::string _output_buffer;
         static const bool REMOVE_CLIENT_SOCKET = false;
         static const bool KEEP_CLIENT_SOCKET = true;
         Client();
@@ -33,8 +35,9 @@ class Client
         void set_realname(const std::string &realname);
         void set_authenticated(bool auth);
         void set_full_connected(bool full);
-
         int get_fd() const;
+
+        void set_server(Server *server);
         const std::string &get_nick() const;
         const std::string &get_user() const;
         const std::string &get_ip() const;
@@ -42,11 +45,12 @@ class Client
         bool is_authenticated() const;
         bool full_connected() const;
 
-        bool execute(Server &server, std::string &request);
-        bool handle_CMD(Server &server, std::vector<std::string> &req);
+        bool execute(std::string &request);
+        bool handle_CMD(std::vector<std::string> &req);
         void add_channel_to_client(const std::string &channel_name);
         void remove_channel_from_client(const std::string &channel_name);
-        void send(const std::string &message) const;
+        void add_to_queue(const std::string &message);
+        void send(void);
         size_t get_channels_count() const;
         const std::vector<std::string> &get_channels_list() const;
 };

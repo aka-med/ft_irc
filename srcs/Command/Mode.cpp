@@ -6,7 +6,7 @@
 #include "../../includes/Reply.hpp"
 #include "../../includes/Utils.hpp"
 
-mode_data_s::mode_data_s(Server &server, Client *client, Channel &channel, const std::vector<std::string> &args) : 
+mode_data_s::mode_data_s(Server *server, Client *client, Channel &channel, const std::vector<std::string> &args) : 
  server(server), client(client), channel(channel), args(args), track_flags(""), track_params(""), params_index(3), sign('+'), prev_sign('0')
 {
 
@@ -48,7 +48,7 @@ bool validate_key(std::string key)
     return true;
 }
 
-void show_active_mods(Server &server, Client *client, Channel *channel)
+void show_active_mods(Server *server, Client *client, Channel *channel)
 {
     std::string modes = "+";
     std::string params = "";
@@ -71,8 +71,8 @@ void show_active_mods(Server &server, Client *client, Channel *channel)
     if (modes == "+")
         modes = "";
     std::string mode_params = channel->get_name() + " " + modes + params;
-    reply = Reply::format_reply(server.get_name(), Reply::RPL_CHANNELMODEIS, client->get_nick(), mode_params, "");
-    client->send(reply);
+    reply = Reply::format_reply(server->get_name(), Reply::RPL_CHANNELMODEIS, client->get_nick(), mode_params, "");
+    client->add_to_queue(reply);
 }
 
 void track_flags_func(mode_data_t &mode_dt, const std::string &str)
@@ -101,7 +101,7 @@ void broadcast_changes(mode_data_t &mode_dt)
     std::string mode_msg = Reply::format_command(mode_dt.client, "MODE", broadcast_params, "");
 
     mode_dt.channel.broadcast(mode_msg, mode_dt.client);
-    mode_dt.client->send(mode_msg);
+    mode_dt.client->add_to_queue(mode_msg);
 }
 ///////////////////////////////////---- mode i function-----//////////////////////////////////////////
 
@@ -147,15 +147,15 @@ void mode_k_flag(mode_data_t &mode_dt)
     {
         if(mode_dt.args.size() <= mode_dt.params_index)
         {
-            reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
-            mode_dt.client->send(reply);
+            reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
+            mode_dt.client->add_to_queue(reply);
             return;
         }
         std::string key = mode_dt.args[mode_dt.params_index++];
         if(!validate_key(key))
         {
-            reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_INVALIDMODEPARM, mode_dt.client->get_nick(), key, "Invalid mode parameter.");
-            mode_dt.client->send(reply);
+            reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_INVALIDMODEPARM, mode_dt.client->get_nick(), key, "Invalid mode parameter.");
+            mode_dt.client->add_to_queue(reply);
             return;
         }
         mode_dt.channel.set_k_flag(true);
@@ -164,8 +164,8 @@ void mode_k_flag(mode_data_t &mode_dt)
     }
     else if (mode_dt.sign == '+' && mode_dt.channel.get_k_flag())
     {
-        reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_KEYSET, mode_dt.client->get_nick(), mode_dt.channel.get_name(), "Channel key already set");
-        mode_dt.client->send(reply);
+        reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_KEYSET, mode_dt.client->get_nick(), mode_dt.channel.get_name(), "Channel key already set");
+        mode_dt.client->add_to_queue(reply);
         return;
     }
     else
@@ -183,28 +183,28 @@ void mode_o_flag(mode_data_t &mode_dt)
 
     if(mode_dt.args.size() <= mode_dt.params_index)
     {
-        reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
-        mode_dt.client->send(reply);
+        reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
+        mode_dt.client->add_to_queue(reply);
         return;
     }
     std::string nick = mode_dt.args[mode_dt.params_index++];
     if(nick.empty())
     {
-        reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NOSUCHNICK, mode_dt.client->get_nick(), nick, "No such nick");
-        mode_dt.client->send(reply);
+        reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_NOSUCHNICK, mode_dt.client->get_nick(), nick, "No such nick");
+        mode_dt.client->add_to_queue(reply);
         return;
     }
-    Client *target_client_ptr = mode_dt.server.getClientByNick(nick);
+    Client *target_client_ptr = mode_dt.server->getClientByNick(nick);
     if(!target_client_ptr)
     {
-        reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NOSUCHNICK, mode_dt.client->get_nick(), nick, "No such nick");
-        mode_dt.client->send(reply);
+        reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_NOSUCHNICK, mode_dt.client->get_nick(), nick, "No such nick");
+        mode_dt.client->add_to_queue(reply);
         return;
     }
     if(!mode_dt.channel.is_user_in_channel(target_client_ptr))
     {
-        reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_USERNOTINCHANNEL, mode_dt.client->get_nick(), nick + " " + mode_dt.channel.get_name(), "They aren't on that channel");
-        mode_dt.client->send(reply);
+        reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_USERNOTINCHANNEL, mode_dt.client->get_nick(), nick + " " + mode_dt.channel.get_name(), "They aren't on that channel");
+        mode_dt.client->add_to_queue(reply);
         return;
     }
 
@@ -235,16 +235,16 @@ void mode_l_flag(mode_data_t &mode_dt)
     {
         if(mode_dt.args.size() <= mode_dt.params_index)
         {
-            reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
-            mode_dt.client->send(reply);
+            reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_NEEDMOREPARAMS, mode_dt.client->get_nick(), "MODE", "Not enough parameters");
+            mode_dt.client->add_to_queue(reply);
             return;
         }
         std::string limit_str = mode_dt.args[mode_dt.params_index++];
         int limit = validate_limit(limit_str);
         if(limit < 0)
         {
-            reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_INVALIDMODEPARM, mode_dt.client->get_nick(), limit_str, "Invalid mode parameter.");
-            mode_dt.client->send(reply);
+            reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_INVALIDMODEPARM, mode_dt.client->get_nick(), limit_str, "Invalid mode parameter.");
+            mode_dt.client->add_to_queue(reply);
             return;
         }
         mode_dt.channel.set_limit(limit);
@@ -262,7 +262,7 @@ void mode_l_flag(mode_data_t &mode_dt)
 ///////////////////////////////////----mode setter function-----//////////////////////////////////////////
 
 
-void set_mods(Server &server, Client *client, const std::vector<std::string> &args, Channel &channel)
+void set_mods(Server *server, Client *client, const std::vector<std::string> &args, Channel &channel)
 {
 
     mode_data_t mode_dt(server, client, channel, args);
@@ -290,8 +290,8 @@ void set_mods(Server &server, Client *client, const std::vector<std::string> &ar
         {
             std::string str_char = "";
             str_char += str_flags[i];
-            reply = Reply::format_reply(mode_dt.server.get_name(), Reply::ERR_UNKNOWNMODE, mode_dt.client->get_nick(), str_char, "is unknown mode char to me");
-            mode_dt.client->send(reply);
+            reply = Reply::format_reply(mode_dt.server->get_name(), Reply::ERR_UNKNOWNMODE, mode_dt.client->get_nick(), str_char, "is unknown mode char to me");
+            mode_dt.client->add_to_queue(reply);
         }
     }
 
@@ -300,7 +300,7 @@ void set_mods(Server &server, Client *client, const std::vector<std::string> &ar
 }
 
 ///////////////////////////////////----main mode function-----//////////////////////////////////////////
-bool Command::mode(Server &server, Client *client, const std::vector<std::string> &args)
+bool Command::mode(Server *server, Client *client, const std::vector<std::string> &args)
 {
     std::string reply;
     std::string target;
@@ -308,24 +308,24 @@ bool Command::mode(Server &server, Client *client, const std::vector<std::string
     target = client->get_nick();
     if (args.size() < 2)
     {
-        reply = Reply::format_reply(server.get_name(), Reply::ERR_NEEDMOREPARAMS, target, "MODE", "Not enough parameters");
-        client->send(reply);
+        reply = Reply::format_reply(server->get_name(), Reply::ERR_NEEDMOREPARAMS, target, "MODE", "Not enough parameters");
+        client->add_to_queue(reply);
         return Client::KEEP_CLIENT_SOCKET;
     }
     if (args[1].empty() || args[1][0] == '#')
     {
         std::string channel_name = args[1];
-        if (!server.channelExists(channel_name))
+        if (!server->channelExists(channel_name))
         {
-            reply = Reply::format_reply(server.get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
-            client->send(reply);
+            reply = Reply::format_reply(server->get_name(), Reply::ERR_NOSUCHCHANNEL, target, channel_name, "No such channel");
+            client->add_to_queue(reply);
             return Client::KEEP_CLIENT_SOCKET;
         }
-        Channel *channel = server.getChannel(channel_name);
+        Channel *channel = server->getChannel(channel_name);
         if (!channel->is_user_in_channel(client))
         {
-            reply = Reply::format_reply(server.get_name(), Reply::ERR_NOTONCHANNEL, target, channel_name, "You're not on that channel");
-            client->send(reply);
+            reply = Reply::format_reply(server->get_name(), Reply::ERR_NOTONCHANNEL, target, channel_name, "You're not on that channel");
+            client->add_to_queue(reply);
             return Client::KEEP_CLIENT_SOCKET;
         }
         if (args.size() == 2)
@@ -335,8 +335,8 @@ bool Command::mode(Server &server, Client *client, const std::vector<std::string
         }
         if (!channel->is_operator(client))
         {
-            reply = Reply::format_reply(server.get_name(), Reply::ERR_CHANOPRIVSNEEDED, target, channel_name, "You're not channel operator");
-            client->send(reply);
+            reply = Reply::format_reply(server->get_name(), Reply::ERR_CHANOPRIVSNEEDED, target, channel_name, "You're not channel operator");
+            client->add_to_queue(reply);
             return Client::KEEP_CLIENT_SOCKET;
         }
         set_mods(server, client, args, *channel);
@@ -345,7 +345,7 @@ bool Command::mode(Server &server, Client *client, const std::vector<std::string
     else
     {
         reply = ":" + client->get_nick() + " MODE " + client->get_nick() + " :" + args[1] + "\r\n";
-        client->send(reply);
+        client->add_to_queue(reply);
     }
     return Client::KEEP_CLIENT_SOCKET;
 }
