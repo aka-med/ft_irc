@@ -1,4 +1,5 @@
 #include "../../includes/Client.hpp"
+#include "../../includes/Channel.hpp"
 #include "../../includes/Bot.hpp"
 #include "../../includes/Server.hpp"
 #include "../../includes/Commands.hpp"
@@ -35,15 +36,23 @@ bool Command::nick(Server *server, Client *client, const std::string &nickname)
         return Client::KEEP_CLIENT_SOCKET;
     }
 
-    client->set_nick(nickname);
-    target = nickname;
     if (!old_nick.empty())
     {
         reply = Reply::format_command(client, "NICK", nickname, "");
         client->add_to_queue(reply);
+        const std::vector<std::string> &channels = client->get_channels_list();
+        for (size_t i = 0; i < channels.size(); i++)
+        {
+            Channel *chan = server->getChannel(channels[i]);
+            if (chan)
+                chan->broadcast(reply, client);
+        }
+        client->set_nick(nickname);
         return Client::KEEP_CLIENT_SOCKET;
     }
     
+    client->set_nick(nickname);
+    target = nickname;
     if (!client->get_user().empty() && !client->full_connected())
     {
         client->set_full_connected(true);
