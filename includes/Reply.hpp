@@ -18,8 +18,10 @@ namespace Reply
     // 200 - 299 : Server Information, Stats, and Trace Data
     
     // 300 - 399 : Data Lists, Queries, and MOTD (NOT Errors!)
+    const std::string RPL_CHANNELMODEIS = "324";   // Mode query reply
     const std::string RPL_NOTOPIC = "331"; // For no topic set on channel 
     const std::string RPL_TOPIC = "332"; // For channel topic
+    const std::string RPL_INVITING = "341"; // For successful invite command
     const std::string RPL_NAMREPLY = "353"; // For names in channel
     const std::string RPL_ENDOFNAMES = "366"; // For end of names list
     // 400 - 499 : Standard Client and Command Errors
@@ -38,20 +40,16 @@ namespace Reply
     const std::string ERR_NEEDMOREPARAMS = "461"; // For missing parameters in commands
     const std::string ERR_ALREADYREGISTRED = "462"; // For already registered clients
     const std::string ERR_PASSWDMISMATCH = "464"; // For server connection
+    const std::string ERR_KEYSET = "467"; // Channel key already set
     const std::string ERR_CHANNELISFULL = "471"; // channel is full
     const std::string ERR_BADCHANNELKEY = "475";  // channel key is incorrect
+    const std::string ERR_UNKNOWNMODE   = "472";   // Unknown mode character
     const std::string ERR_INVITEONLYCHAN = "473"; // channel is invite only
     const std::string ERR_CHANOPRIVSNEEDED = "482"; // For channel operator privileges needed
     // 500 - 599 : Server-Side Errors and Mode Errors
     const std::string ERR_USERSDONTMATCH = "502"; // For mode changes on other users
-
-    const std::string RPL_CHANNELMODEIS = "324";   // Mode query reply
-    const std::string ERR_UNKNOWNMODE   = "472";   // Unknown mode character
-    const std::string ERR_KEYSET = "467";
-
-    const std::string ERR_INVALIDMODEPARM = "696";
-    const std::string RPL_INVITING = "341";
-    // :<prefix> <numeric> <target> [parameters] :<trailing text>\r\n
+    const std::string ERR_INVALIDMODEPARM = "696"; // Invalid mode parameter (custom error for our server)
+   
     std::string format_reply(const std::string &prefix, const std::string &numeric, const std::string &target, const std::string &parameters, const std::string &trailing);
     std::string format_command(Client *sender, const std::string &command, const std::string &params, const std::string &trailing);
 }
