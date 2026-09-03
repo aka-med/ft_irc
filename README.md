@@ -4,7 +4,13 @@ An IRC server built from scratch in **C++98**, fully compatible with standard IR
 
 > A [42 School](https://42.fr/) project.
 
-**Authors:** [Ayoub Diri](https://github.com/ayoubediri) · [Mohammed Akarkaou](https://github.com/makarkao) · [Youssef El Bouzidi](https://github.com/Yo-omega)
+**Authors:** [Ayoub Diri](https://github.com/ayoubediri) · [Mohammed Akarkaou](https://github.com/makarkao) · [Youssef El Bouzidi](https://github.com/authyx)
+
+**Tech stack:** C++98, POSIX sockets, `poll()`, Makefile.
+
+## What I learned
+
+Built a fully functional IRC server from scratch with two teammates. The hard parts: getting non-blocking I/O right with `poll()` so multiple clients can send commands simultaneously without blocking each other, and implementing the IRC state machine (registration → channel membership → modes) so the server behaves correctly under concurrent connections. The CalcBot and DCC relay were bonus features on top. Tested against irssi to make sure real clients could actually connect.
 
 ---
 
